@@ -9,10 +9,13 @@
     "dev": "webpack --progress --colors --watch"
   },
   "dependencies": {
+    "bluebird": "^3.5.0",
     "brfs": "^1.4.3",
     "pixi.js": "^4.5.4",
+    "ramda": "^0.24.1",
     "react": "^15.6.1",
-    "react-dom": "^15.6.1"
+    "react-dom": "^15.6.1",
+    "shortid": "^2.2.8"
   },
   "devDependencies": {
     "@types/core-js": "^0.9.42",
