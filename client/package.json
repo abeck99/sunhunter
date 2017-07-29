@@ -1,0 +1,27 @@
+{
+  "name": "sunhunter",
+  "version": "0.0.1",
+  "description": "Sun Hunter game for LD39",
+  "main": "index.js",
+  "author": "Andrew Beck",
+  "license": "MIT",
+  "scripts": {
+    "dev": "webpack --progress --colors --watch"
+  },
+  "dependencies": {
+    "brfs": "^1.4.3",
+    "pixi.js": "^4.5.4",
+    "react": "^15.6.1",
+    "react-dom": "^15.6.1"
+  },
+  "devDependencies": {
+    "@types/core-js": "^0.9.42",
+    "@types/pixi.js": "^4.5.2",
+    "@types/react": "^15.6.0",
+    "awesome-typescript-loader": "^3.2.2",
+    "source-map-loader": "^0.2.1",
+    "transform-loader": "^0.2.4",
+    "typescript": "^2.4.2",
+    "webpack": "^3.4.1"
+  }
+}
