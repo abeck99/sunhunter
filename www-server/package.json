@@ -1,0 +1,16 @@
+{
+  "name": "www-server",
+  "version": "1.0.0",
+  "description": "Host client",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.15.3",
+    "fs": "^0.0.1-security",
+    "morgan": "^1.8.2",
+    "path": "^0.12.7"
+  },
+  "scripts": {
+    "run": "node index.js"
+  }
+}

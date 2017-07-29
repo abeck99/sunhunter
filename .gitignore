@@ -1,5 +1,4 @@
-.build/**/*
-!.build/index.html
+client/www/scripts/**/*
 
 *.log
 */node_modules

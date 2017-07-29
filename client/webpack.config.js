@@ -5,7 +5,7 @@ const path = require('path');
 const { CheckerPlugin } = require('awesome-typescript-loader')
 
 const clientPath = __dirname
-const buildPath = `${clientPath}/../.build/assets/`
+const buildPath = `${clientPath}/www/scripts/`
 
 module.exports = {
   devtool: 'source-map',
@@ -16,7 +16,7 @@ module.exports = {
   },
   output: {
     path: `${buildPath}/`,
-    publicPath: 'assets/',
+    publicPath: 'scripts/',
     filename: '[name].js',
   },
   plugins: [
