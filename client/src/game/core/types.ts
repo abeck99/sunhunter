@@ -35,7 +35,7 @@ export interface IComponentClass<TComponentState, TPhysics, TComponents, Instanc
 
 
 // World definitions
-export type UuidToComponentFunction<TComponent> = (uuid: string) => TComponent
+export type LensFunction<T> = (uuid: string) => T
 
 export interface IWorld<TPhysics, TComponents> {
   container: Container
@@ -53,9 +53,7 @@ export interface IWorld<TPhysics, TComponents> {
 
   getActor: (uuid: string) => IActor<TComponents>
 
-  lens: <TComponentState, TPhysics, TComponent extends IComponent<TComponentState, TPhysics, TComponents>>(
-         lensFunc: (actor: IActor<TComponents>) => TComponent
-        ) => UuidToComponentFunction<TComponent>
+  lens: <T>(lensFunc: (actor: IActor<TComponents>) => T) => LensFunction<T>
 }
 
 

@@ -9,7 +9,7 @@ export class FollowComponent extends Component<IFollowState, Physics, IComponent
     t: null,
   }
 
-  getPos?: UuidToComponentFunction<PositionComponent>
+  getPos?: LensFunction<PositionComponent>
   addToWorldPartTwo = () => {
     this.getPos = positionLens(this.world)
   }

@@ -1,7 +1,7 @@
 import { IComponentClass, IAsset } from './core/types'
 import * as PIXI from "pixi.js"
 import * as R from 'ramda'
-import { UuidToComponentFunction } from './core/types'
+import { LensFunction } from './core/types'
 import { Physics } from './physics'
 import { IVector2d } from './util/math'
 import { CAMERA, SCREEN } from './util'
@@ -79,9 +79,15 @@ export class BoxColliderComponent extends Component<IBoxColliderState, Physics, 
  const _: IComponentClass<IBoxColliderState, Physics, IComponents, BoxColliderComponent> = BoxColliderComponent
 }
 
-export const boxColliderLens = (world: IWorld<any, IComponents>): UuidToComponentFunction<BoxColliderComponent> => {
+export const boxColliderLens = (world: IWorld<any, IComponents>): LensFunction<BoxColliderComponent> => {
   return world.lens((actor: IActor<IComponents>) => {
     return actor.components.boxCollider
+  })
+}
+
+export const boxColliderStateLens = (world: IWorld<any, IComponents>): LensFunction<IBoxColliderState> => {
+  return world.lens((actor: IActor<IComponents>) => {
+    return actor.components.boxCollider.state
   })
 }
 
@@ -118,9 +124,15 @@ export class DragComponent extends Component<IDragState, Physics, IComponents> {
  const _: IComponentClass<IDragState, Physics, IComponents, DragComponent> = DragComponent
 }
 
-export const dragLens = (world: IWorld<any, IComponents>): UuidToComponentFunction<DragComponent> => {
+export const dragLens = (world: IWorld<any, IComponents>): LensFunction<DragComponent> => {
   return world.lens((actor: IActor<IComponents>) => {
     return actor.components.drag
+  })
+}
+
+export const dragStateLens = (world: IWorld<any, IComponents>): LensFunction<IDragState> => {
+  return world.lens((actor: IActor<IComponents>) => {
+    return actor.components.drag.state
   })
 }
 
@@ -135,7 +147,7 @@ export class FollowComponent extends Component<IFollowState, Physics, IComponent
     t: null,
   }
 
-  getPos?: UuidToComponentFunction<PositionComponent>
+  getPos?: LensFunction<PositionComponent>
   addToWorldPartTwo = () => {
     this.getPos = positionLens(this.world)
   }
@@ -163,9 +175,15 @@ export class FollowComponent extends Component<IFollowState, Physics, IComponent
  const _: IComponentClass<IFollowState, Physics, IComponents, FollowComponent> = FollowComponent
 }
 
-export const followLens = (world: IWorld<any, IComponents>): UuidToComponentFunction<FollowComponent> => {
+export const followLens = (world: IWorld<any, IComponents>): LensFunction<FollowComponent> => {
   return world.lens((actor: IActor<IComponents>) => {
     return actor.components.follow
+  })
+}
+
+export const followStateLens = (world: IWorld<any, IComponents>): LensFunction<IFollowState> => {
+  return world.lens((actor: IActor<IComponents>) => {
+    return actor.components.follow.state
   })
 }
 
@@ -185,9 +203,15 @@ export class NetworkedComponent extends Component<INetState, Physics, IComponent
  const _: IComponentClass<INetState, Physics, IComponents, NetworkedComponent> = NetworkedComponent
 }
 
-export const netLens = (world: IWorld<any, IComponents>): UuidToComponentFunction<NetworkedComponent> => {
+export const netLens = (world: IWorld<any, IComponents>): LensFunction<NetworkedComponent> => {
   return world.lens((actor: IActor<IComponents>) => {
     return actor.components.net
+  })
+}
+
+export const netStateLens = (world: IWorld<any, IComponents>): LensFunction<INetState> => {
+  return world.lens((actor: IActor<IComponents>) => {
+    return actor.components.net.state
   })
 }
 
@@ -216,9 +240,15 @@ export class PositionComponent extends Component<IPositionState, Physics, ICompo
  const _: IComponentClass<IPositionState, Physics, IComponents, PositionComponent> = PositionComponent
 }
 
-export const positionLens = (world: IWorld<any, IComponents>): UuidToComponentFunction<PositionComponent> => {
+export const positionLens = (world: IWorld<any, IComponents>): LensFunction<PositionComponent> => {
   return world.lens((actor: IActor<IComponents>) => {
     return actor.components.position
+  })
+}
+
+export const positionStateLens = (world: IWorld<any, IComponents>): LensFunction<IPositionState> => {
+  return world.lens((actor: IActor<IComponents>) => {
+    return actor.components.position.state
   })
 }
 
@@ -252,9 +282,15 @@ export class ScreenAttributesComponent extends Component<IScreenAttributesState,
  const _: IComponentClass<IScreenAttributesState, Physics, IComponents, ScreenAttributesComponent> = ScreenAttributesComponent
 }
 
-export const screenLens = (world: IWorld<any, IComponents>): UuidToComponentFunction<ScreenAttributesComponent> => {
+export const screenLens = (world: IWorld<any, IComponents>): LensFunction<ScreenAttributesComponent> => {
   return world.lens((actor: IActor<IComponents>) => {
     return actor.components.screen
+  })
+}
+
+export const screenStateLens = (world: IWorld<any, IComponents>): LensFunction<IScreenAttributesState> => {
+  return world.lens((actor: IActor<IComponents>) => {
+    return actor.components.screen.state
   })
 }
 
@@ -279,8 +315,8 @@ export class SpriteComponent extends Component<ISpriteState, Physics, IComponent
     ]
   }
 
-  getPos?: UuidToComponentFunction<PositionComponent>
-  getScreen?: UuidToComponentFunction<ScreenAttributesComponent>
+  getPos?: LensFunction<PositionComponent>
+  getScreen?: LensFunction<ScreenAttributesComponent>
   addToWorldPartTwo = () => {
     this.sprite = new PIXI.Sprite(this.world.getTexture(this.state.asset))
     this.world.container.addChild(this.sprite)
@@ -319,9 +355,15 @@ export class SpriteComponent extends Component<ISpriteState, Physics, IComponent
  const _: IComponentClass<ISpriteState, Physics, IComponents, SpriteComponent> = SpriteComponent
 }
 
-export const spriteLens = (world: IWorld<any, IComponents>): UuidToComponentFunction<SpriteComponent> => {
+export const spriteLens = (world: IWorld<any, IComponents>): LensFunction<SpriteComponent> => {
   return world.lens((actor: IActor<IComponents>) => {
     return actor.components.sprite
+  })
+}
+
+export const spriteStateLens = (world: IWorld<any, IComponents>): LensFunction<ISpriteState> => {
+  return world.lens((actor: IActor<IComponents>) => {
+    return actor.components.sprite.state
   })
 }
 
@@ -355,9 +397,15 @@ export class VelocityComponent extends Component<IVelocityState, Physics, ICompo
  const _: IComponentClass<IVelocityState, Physics, IComponents, VelocityComponent> = VelocityComponent
 }
 
-export const velocityLens = (world: IWorld<any, IComponents>): UuidToComponentFunction<VelocityComponent> => {
+export const velocityLens = (world: IWorld<any, IComponents>): LensFunction<VelocityComponent> => {
   return world.lens((actor: IActor<IComponents>) => {
     return actor.components.velocity
+  })
+}
+
+export const velocityStateLens = (world: IWorld<any, IComponents>): LensFunction<IVelocityState> => {
+  return world.lens((actor: IActor<IComponents>) => {
+    return actor.components.velocity.state
   })
 }
 

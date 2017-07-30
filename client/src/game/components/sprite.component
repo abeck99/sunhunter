@@ -19,8 +19,8 @@ export class SpriteComponent extends Component<ISpriteState, Physics, IComponent
     ]
   }
 
-  getPos?: UuidToComponentFunction<PositionComponent>
-  getScreen?: UuidToComponentFunction<ScreenAttributesComponent>
+  getPos?: LensFunction<PositionComponent>
+  getScreen?: LensFunction<ScreenAttributesComponent>
   addToWorldPartTwo = () => {
     this.sprite = new PIXI.Sprite(this.world.getTexture(this.state.asset))
     this.world.container.addChild(this.sprite)

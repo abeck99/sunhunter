@@ -2,7 +2,7 @@ import * as PIXI from "pixi.js"
 import * as id from 'shortid'
 import * as Promise from 'bluebird'
 import * as R from 'ramda'
-import { IActorClass, IActor, IActorState, IWorld, IComponent, IActorFactory, TickFunction, IAsset, UuidToComponentFunction } from './types'
+import { IActorClass, IActor, IActorState, IWorld, IComponent, IActorFactory, TickFunction, IAsset, LensFunction } from './types'
 import { Actor } from '../defs'
 
 export class World<TPhysics, TComponents> implements IWorld<TPhysics, TComponents> {
@@ -67,10 +67,8 @@ export class World<TPhysics, TComponents> implements IWorld<TPhysics, TComponent
     return this.actors[uuid]
   }
 
-  lens = <TComponentState, TPhysics, TComponent extends IComponent<TComponentState, TPhysics, TComponents>>(
-         lensFunc: (actor: IActor<TComponents>) => TComponent
-        ): UuidToComponentFunction<TComponent> => {
-    return (uuid: string): TComponent => {
+  lens = <T>(lensFunc: (actor: IActor<TComponents>) => T): LensFunction<T> => {
+    return (uuid: string): T => {
       const actor = this.getActor(uuid)
       if (actor) {
         return lensFunc(actor)

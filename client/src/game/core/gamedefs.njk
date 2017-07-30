@@ -1,7 +1,7 @@
 import { IComponentClass, IAsset } from './core/types'
 import * as PIXI from "pixi.js"
 import * as R from 'ramda'
-import { UuidToComponentFunction } from './core/types'
+import { LensFunction } from './core/types'
 import { Physics } from './physics'
 import { IVector2d } from './util/math'
 import { CAMERA, SCREEN } from './util'
@@ -64,9 +64,15 @@ export class Component<TComponentState, TPhysics, TComponents> implements ICompo
  const _: IComponentClass<{{ component.state }}, Physics, IComponents, {{ component.className }}> = {{ component.className }}
 }
 
-export const {{ component.name }}Lens = (world: IWorld<any, IComponents>): UuidToComponentFunction<{{ component.className }}> => {
+export const {{ component.name }}Lens = (world: IWorld<any, IComponents>): LensFunction<{{ component.className }}> => {
   return world.lens((actor: IActor<IComponents>) => {
     return actor.components.{{ component.name }}
+  })
+}
+
+export const {{ component.name }}StateLens = (world: IWorld<any, IComponents>): LensFunction<{{ component.state }}> => {
+  return world.lens((actor: IActor<IComponents>) => {
+    return actor.components.{{ component.name }}.state
   })
 }
 
