@@ -3,6 +3,10 @@ import { Sprite, loader, Container } from "pixi.js"
 import { IActor, IActorClass, IComponentClass, IActorFactory } from './types'
 import * as R from 'ramda'
 
+const debugLog = (s: string) => {
+  //console.log(s)
+}
+
 interface IAsset {
   url: string
 }
@@ -73,24 +77,24 @@ export class ActorFactory<TComponents> implements IActorFactory<TComponents> {
       this.loadStates[assetKey] = LoadState.Loaded
     }
 
-    console.log(`current load states: ${this.loadStates}`)
+    debugLog(`current load states: ${this.loadStates}`)
 
     const hasLoadedAllAssetKeys = R.all((assetKey: string): boolean => {
       return this.loadStates[assetKey] == LoadState.Loaded
     })
 
-    console.log(`Finsihed loading ${assetKeys}`)
+    debugLog(`Finsihed loading ${assetKeys}`)
 
     // Dispatch promises
     var newLoadPromises: ILoadPromise[] = []
     for (const loadPromise of this.loadPromises) {
       if (hasLoadedAllAssetKeys(loadPromise.assetKeys)) {
 
-        console.log('found someone waiting...')
+        debugLog('found someone waiting...')
         loadPromise.promise.resolve(true)
       } else {
 
-        console.log('hmm this guys still watiing on something')
+        debugLog('hmm this guys still watiing on something')
         newLoadPromises.push(loadPromise)
       }
     }
@@ -100,11 +104,12 @@ export class ActorFactory<TComponents> implements IActorFactory<TComponents> {
   }
 
   dispatchPendingLoads = () => {
-    if (this.pendingLoads.length == 0) {
+    const assetKeys = R.keys(this.pendingLoads)
+
+    if (assetKeys.length == 0) {
       return
     }
 
-    const assetKeys = R.keys(this.pendingLoads)
     for (const assetKey of assetKeys) {
       if (this.loadStates[assetKey] == LoadState.Loaded) {
         // Should never happen but sanity check in case theres a bug
@@ -117,6 +122,7 @@ export class ActorFactory<TComponents> implements IActorFactory<TComponents> {
     // Loader can't handle multiple requests at once, so we defer until the previous finishes
     //    This also assumes that NOONE ELSE is call loader...
     if (loader.loading) {
+      debugLog('already loading something, bailing out')
       return
     }
 

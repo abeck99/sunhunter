@@ -8,7 +8,10 @@ export class TestEffector<TPhysics> extends GameEffector<{}, TPhysics, IComponen
 
   start = (shouldLoadContent: boolean) => {
     if (shouldLoadContent) {
-      this.playerId = this.world.spawn(PlayerActor, {drag: {a:10}}).uuid
+      this.playerId = this.world.spawn(PlayerActor, {
+        position: {y: 16},
+        drag: {a:10},
+      }).uuid
     }
 
     const velocity = velocityLens(this.world)

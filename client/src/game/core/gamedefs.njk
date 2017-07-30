@@ -26,13 +26,17 @@ export class Component<TComponentState, TPhysics, TComponents> implements ICompo
     return this.world && this.loaded
   }
 
-  dispatchAddRemoveIfNeeded = () => {
+  dispatchAddRemoveIfNeeded = (previousWorld: IWorld<TPhysics, TComponents>) => {
     if (!this.wasAddedToWorld && this.shouldBeInWorld()) {
       this.wasAddedToWorld = true
       this.addToWorldPartTwo()
     } else if (this.wasAddedToWorld && !this.shouldBeInWorld()) {
       this.wasAddedToWorld = false
+      const tempWorld = this.world
+      // Set to previous world temporarily to allow detatching
+      this.world = previousWorld
       this.removeFromWorldPartTwo()
+      this.world = tempWorld
     }
   }
 
@@ -41,13 +45,14 @@ export class Component<TComponentState, TPhysics, TComponents> implements ICompo
   removeFromWorldPartTwo = () => {}
 
   setWorld = (world: IWorld<TPhysics, TComponents>) => {
+    const previousWorld = this.world
     this.world = world
-    this.dispatchAddRemoveIfNeeded()
+    this.dispatchAddRemoveIfNeeded(previousWorld)
   }
 
   setLoaded = (isLoaded: boolean) => {
     this.loaded = isLoaded
-    this.dispatchAddRemoveIfNeeded()
+    this.dispatchAddRemoveIfNeeded(this.world)
   }
 
   tick = (elapsedTime: number) => {}

@@ -18,6 +18,10 @@ interface IBlockDescription {
   uuids: string[]
 }
 
+const debugLog = (s: string) => {
+  //console.log(s)
+}
+
 export class GenerativeWorldEffector<TPhysics> extends GameEffector<IWorldGenerationConfig, TPhysics, IComponents> {
   getPos: LensFunction<IPositionState>
 
@@ -38,7 +42,8 @@ export class GenerativeWorldEffector<TPhysics> extends GameEffector<IWorldGenera
       return
     }
 
-    const gridPoint = this.pixelate({x:followPos.x, y:followPos.y}, this.config.gridSize)
+    const gridSize = this.config.gridSize
+    const gridPoint = this.pixelate({x:followPos.x, y:followPos.y}, gridSize)
 
     // Load in blocks of blockLoadSize x blockLoadSize so we don't waste a lot of time
     const blockLoadSize = this.config.blockLoadSize
@@ -62,6 +67,9 @@ export class GenerativeWorldEffector<TPhysics> extends GameEffector<IWorldGenera
 
     for (const blockId of blocksToRemove) {
       const blockDescription = this.loadedBlocks[blockId]
+      if (blockDescription.uuids.length > 0) {
+        debugLog(`removing some actors part of block ${blockId}`)
+      }
       for (const uuid of blockDescription.uuids) {
         this.world.removeActorFromWorldWithId(uuid)
       }
@@ -71,7 +79,6 @@ export class GenerativeWorldEffector<TPhysics> extends GameEffector<IWorldGenera
     const halfBlockSize = blockLoadSize/2
 
     for (const blockId of blocksToAdd) {
-      console.log(`loading block ${blockId}`)
       const blockPoint = blocksToLoad[blockId]
 
       const p = {
@@ -83,10 +90,13 @@ export class GenerativeWorldEffector<TPhysics> extends GameEffector<IWorldGenera
       for (var x=p.x-halfBlockSize; x<p.x+halfBlockSize; x++) {
         for (var y=p.y-halfBlockSize; y<p.y+halfBlockSize; y++) {
           if (this.hasBlockAtGridPos({x: x, y: y})) {
-            console.log('spawning block')
-            uuidsInBlock.push(this.world.spawn(BlockActor, {}).uuid)
-          } else {
-            console.log(`${x}, ${y} was not a block`)
+            debugLog('spawning block')
+            uuidsInBlock.push(this.world.spawn(BlockActor, {
+              position: {
+                x: x*gridSize,
+                y: y*gridSize,
+              }
+            }).uuid)
           }
         }
       }
@@ -98,6 +108,10 @@ export class GenerativeWorldEffector<TPhysics> extends GameEffector<IWorldGenera
   }
 
   hasBlockAtGridPos = (pos: IVector2d): boolean => {
+    if ((window as any).levelFunc) {
+      return (window as any).levelFunc(pos)
+    }
+
     if (pos.y == -1) {
       return true
     }

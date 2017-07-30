@@ -29,6 +29,8 @@ export class SpriteComponent extends Component<ISpriteState, Physics, IComponent
   }
 
   removeFromWorldPartTwo = () => {
+    this.world.container.removeChild(this.sprite)
+    this.sprite = null
     this.getPos = null
     this.getScreen = null
   }
