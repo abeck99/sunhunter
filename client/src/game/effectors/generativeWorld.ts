@@ -3,13 +3,15 @@ import { GameEffector } from '../core/effectors'
 import { IVector2d } from '../util/math'
 import { IPositionState, positionStateLens, IComponents } from '../defs'
 import { LensFunction } from '../core/types'
-import { CAMERA } from '../util'
 import { BlockActor } from '../actors/Block'
 
 interface IWorldGenerationConfig {
   gridSize: number
-  blockLoadSize: number
+  blockLoadSize: number // NEEDS TO BE EVEN
   blockLoadDistance: number
+  followActor: string // TODO: this should be moved into a component so it can be correctly serialized
+                      // Alternatively add proper serializatrion to effectors
+                      // Alternatively alternatively effectors can act like 'systems' in a pure ECS and work only on data from components
 }
 
 interface IBlockDescription {
@@ -31,12 +33,12 @@ export class GenerativeWorldEffector<TPhysics> extends GameEffector<IWorldGenera
   loadedBlocks: {[key: string]: IBlockDescription}
 
   determineNeededSquares = () => {
-    const cameraPos = this.getPos(CAMERA)
-    if (!cameraPos) {
+    const followPos = this.getPos(this.config.followActor)
+    if (!followPos) {
       return
     }
 
-    const gridPoint = this.pixelate({x:cameraPos.x, y:cameraPos.y}, this.config.gridSize)
+    const gridPoint = this.pixelate({x:followPos.x, y:followPos.y}, this.config.gridSize)
 
     // Load in blocks of blockLoadSize x blockLoadSize so we don't waste a lot of time
     const blockLoadSize = this.config.blockLoadSize
@@ -69,6 +71,7 @@ export class GenerativeWorldEffector<TPhysics> extends GameEffector<IWorldGenera
     const halfBlockSize = blockLoadSize/2
 
     for (const blockId of blocksToAdd) {
+      console.log(`loading block ${blockId}`)
       const blockPoint = blocksToLoad[blockId]
 
       const p = {
@@ -80,7 +83,10 @@ export class GenerativeWorldEffector<TPhysics> extends GameEffector<IWorldGenera
       for (var x=p.x-halfBlockSize; x<p.x+halfBlockSize; x++) {
         for (var y=p.y-halfBlockSize; y<p.y+halfBlockSize; y++) {
           if (this.hasBlockAtGridPos({x: x, y: y})) {
+            console.log('spawning block')
             uuidsInBlock.push(this.world.spawn(BlockActor, {}).uuid)
+          } else {
+            console.log(`${x}, ${y} was not a block`)
           }
         }
       }

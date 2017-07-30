@@ -59,16 +59,21 @@ export class ActorFactory<TComponents> implements IActorFactory<TComponents> {
   loadPromises: ILoadPromise[]
   componentClasses: IComponentClassCollection<TComponents>
 
+  pendingLoads: IAsset[]
+
   constructor(componentClasses: IComponentClassCollection<TComponents>) {
     this.loadStates = {}
     this.loadPromises = []
     this.componentClasses = componentClasses
+    this.pendingLoads = []
   }
 
   finishLoad = (assetKeys: string[]) => {
     for (const assetKey of assetKeys) {
       this.loadStates[assetKey] = LoadState.Loaded
     }
+
+    console.log(`current load states: ${this.loadStates}`)
 
     const hasLoadedAllAssetKeys = R.all((assetKey: string): boolean => {
       return this.loadStates[assetKey] == LoadState.Loaded
@@ -90,6 +95,38 @@ export class ActorFactory<TComponents> implements IActorFactory<TComponents> {
       }
     }
     this.loadPromises = newLoadPromises
+
+    this.dispatchPendingLoads()
+  }
+
+  dispatchPendingLoads = () => {
+    if (this.pendingLoads.length == 0) {
+      return
+    }
+
+    const assetKeys = R.keys(this.pendingLoads)
+    for (const assetKey of assetKeys) {
+      if (this.loadStates[assetKey] == LoadState.Loaded) {
+        // Should never happen but sanity check in case theres a bug
+        console.log(`Progreammer error here!! Asset ${assetKey} was already ${this.loadStates[assetKey]}`)
+      } else {
+        this.loadStates[assetKey] = LoadState.Pending
+      }
+    }
+
+    // Loader can't handle multiple requests at once, so we defer until the previous finishes
+    //    This also assumes that NOONE ELSE is call loader...
+    if (loader.loading) {
+      return
+    }
+
+    const assetsToLoadByKey = this.pendingLoads
+    this.pendingLoads = []
+    const assetsToLoad = R.values(assetsToLoadByKey)
+
+    loader.add(R.values(assetsToLoadByKey)).load(() => {
+      this.finishLoad(assetKeys)
+    })
   }
 
   create = <TActorState>(uuid: string, cls: IActorClass<TActorState, TComponents, IActor<TComponents>>, inState: TActorState): IActor<TComponents> => {
@@ -131,31 +168,13 @@ export class ActorFactory<TComponents> implements IActorFactory<TComponents> {
         })
 
         // Search for any assets not currently loading (prevent two attempted loads at once)
-        var assetKeysToLoad: string[] = []
         for (const assetKey of assetKeys) {
           if (this.loadStates[assetKey] == undefined) {
-            assetKeysToLoad.push(assetKey)
+            this.pendingLoads[assetKey] = assetsByKey[assetKey]
           }
         }
-  
-        // If assetKeysToLoad.length is 0 then all assets were already pending load so no work is required
-        // Otherwise start loading the ones that weren't pending
-        if (assetKeysToLoad.length > 0) {
-          const assetsToLoadByKey: IAssetCollection = R.pick(
-            assetKeysToLoad, assetsByKey
-          )
-          const assetsToLoad = R.values(assetsToLoadByKey)
-  
-          console.log(`loading assets .. ${assetsToLoad.length} --- ${assetsToLoad}`)
-  
-          for (const assetKey of assetsToLoad) {
-            console.log(`key: ${assetKey}`)
-          }
-  
-          loader.add(assetsToLoad).load(() => {
-            this.finishLoad(assetKeysToLoad)
-          })
-        }
+
+        this.dispatchPendingLoads()
       }
 
       // When promise completes, all assets are loaded

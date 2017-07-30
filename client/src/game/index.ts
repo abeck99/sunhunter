@@ -42,8 +42,15 @@ export class Game {
     this.renderer.resize(window.innerWidth-50, window.innerHeight-50);
 
     this.world = makeWorld()
-    this.addEffector(new TestEffector(this.world, {}))
+    const testEffector = new TestEffector(this.world, {})
+    this.addEffector(testEffector)
     this.addEffector(new CameraEffector(this.world, {}))
+    this.addEffector(new GenerativeWorldEffector(this.world, {
+      gridSize: 16,
+      blockLoadSize: 6,
+      blockLoadDistance: 1,
+      followActor: testEffector.playerId,
+    }))
 
     this.world.spawnWithId(SCREEN, BlankActor, {
       screen: {
