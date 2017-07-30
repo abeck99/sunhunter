@@ -3,10 +3,18 @@ import { IComponents, positionLens } from '../defs'
 import { CAMERA } from '../util'
 import { CameraActor } from '../actors/Camera'
 
-export class CameraEffector<TPhysics> extends GameEffector<{}, TPhysics, IComponents> {
+interface ICameraConfig {
+  followActor: string
+}
+
+export class CameraEffector<TPhysics> extends GameEffector<ICameraConfig, TPhysics, IComponents> {
   start = (shouldLoadContent: boolean) => {
     if (shouldLoadContent) {
-      this.world.spawnWithId(CAMERA, CameraActor, {})
+      this.world.spawnWithId(CAMERA, CameraActor, {
+        follow: {
+          t: this.config.followActor,
+        }
+      })
     }
   }
 

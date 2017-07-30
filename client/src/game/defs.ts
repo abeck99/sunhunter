@@ -145,16 +145,18 @@ export const dragStateLens = (world: IWorld<any, IComponents>): LensFunction<IDr
 
 export interface IFollowState {
   t?: string
+  d?: number
 }
 
 export class FollowComponent extends Component<IFollowState, Physics, IComponents> {
   static defaultState = {
     t: null,
+    d: 0.5,
   }
 
-  getPos?: LensFunction<PositionComponent>
+  getPos?: LensFunction<IPositionState>
   addToWorldPartTwo = () => {
-    this.getPos = positionLens(this.world)
+    this.getPos = positionStateLens(this.world)
   }
   removeFromWorldPartTwo = () => {
     this.getPos = null
@@ -171,8 +173,10 @@ export class FollowComponent extends Component<IFollowState, Physics, IComponent
       return
     }
 
-    myPos.state.x = targetPos.state.x
-    myPos.state.y = targetPos.state.y
+    const d = this.state.d
+    const dI = 1.0 - d
+    myPos.state.x = (myPos.state.x*d) + (targetPos.x*dI)
+    myPos.state.y = (myPos.state.y*d) + (targetPos.y*dI)
   }
 }
 

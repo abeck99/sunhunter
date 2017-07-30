@@ -42,15 +42,25 @@ export class Game {
     this.renderer.resize(window.innerWidth-50, window.innerHeight-50);
 
     this.world = makeWorld()
-    const testEffector = new TestEffector(this.world, {})
-    this.addEffector(testEffector)
-    this.addEffector(new CameraEffector(this.world, {}))
-    this.addEffector(new GenerativeWorldEffector(this.world, {
-      gridSize: 16,
-      blockLoadSize: 6,
-      blockLoadDistance: 1,
+    const testEffector = this.addEffector(new TestEffector(this.world, {}))
+    const cameraEffector = this.addEffector(new CameraEffector(this.world, {
       followActor: testEffector.playerId,
     }))
+    const generativeWorldEffector = this.addEffector(new GenerativeWorldEffector(this.world, {
+      gridSize: 32,
+      blockLoadSize: 6,
+      blockLoadDistance: 2,
+      followActor: testEffector.playerId,
+    }));
+
+    (window as any).test = testEffector;
+    (window as any).camera = cameraEffector;
+    (window as any).worldGen = generativeWorldEffector;
+    (window as any).world = this.world;
+
+    this.addEffector(testEffector)
+    this.addEffector(cameraEffector)
+    this.addEffector(generativeWorldEffector)
 
     this.world.spawnWithId(SCREEN, BlankActor, {
       screen: {
@@ -79,9 +89,10 @@ export class Game {
     this.tick()
   }
 
-  addEffector = (effector: GameEffector<any, Physics, IComponents>) => {
+  addEffector = <TEffector extends GameEffector<any, Physics, IComponents>>(effector: TEffector): TEffector => {
     this.effectors.push(effector)
     effector.start(true)
+    return effector
   }
 
   removeEffector = (effector: GameEffector<any, Physics, IComponents>) => {

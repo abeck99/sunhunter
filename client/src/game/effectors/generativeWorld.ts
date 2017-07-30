@@ -1,8 +1,8 @@
 import * as R from 'ramda'
 import { GameEffector } from '../core/effectors'
 import { IVector2d } from '../util/math'
-import { IPositionState, positionStateLens, IComponents } from '../defs'
-import { LensFunction } from '../core/types'
+import { IPositionState, positionStateLens, IComponents, IComponentsState } from '../defs'
+import { LensFunction, IActorClass, IActor } from '../core/types'
 import { BlockActor } from '../actors/Block'
 
 interface IWorldGenerationConfig {
@@ -20,6 +20,53 @@ interface IBlockDescription {
 
 const debugLog = (s: string) => {
   //console.log(s)
+}
+
+const aboveGround = 
+[[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+ [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+ [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+ [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+ [0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0],
+ [0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0],
+ [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+ [0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0],
+ [1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1],
+ [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+ [0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0],
+ [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+ [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]
+
+const belowGround =
+[[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+ [1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1],
+ [1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1],
+ [1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1],
+ [1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1],
+ [1,1,1,1,1,1,1,1,1,1,0,0,0,1,1,1,1,1,0,0,0,1,1,1,1,1,1,0,0,0,1,1,1,1,1,1,1,1,1,1],
+ [1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1],
+ [1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1],
+ [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+ [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1],
+ [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1,1,1,1,1],
+ [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,1,1,1,1,1,1,1,1,1,1],
+ [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,1,1,1,1,1,1,1,1,1,1],
+ [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,1,1,1,1,1,1,1],
+ [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,1,1,1,1,1,1],
+ [1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1],
+ [1,1,1,1,1,1,1,1,1,3,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1],
+ [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]
+
+
+enum SpawnType {
+  None = 0,
+  Block = 1,
+  SpawnPoint = 2,
+  Machine = 3,
+}
+
+const spawnClasses = {
+  Block: BlockActor
 }
 
 export class GenerativeWorldEffector<TPhysics> extends GameEffector<IWorldGenerationConfig, TPhysics, IComponents> {
@@ -42,6 +89,11 @@ export class GenerativeWorldEffector<TPhysics> extends GameEffector<IWorldGenera
       return
     }
 
+    var shouldClear = false
+
+    const mapWidth = belowGround[0].length
+    const groundLevel = -1
+
     const gridSize = this.config.gridSize
     const gridPoint = this.pixelate({x:followPos.x, y:followPos.y}, gridSize)
 
@@ -62,8 +114,8 @@ export class GenerativeWorldEffector<TPhysics> extends GameEffector<IWorldGenera
     const currentlyLoadedBlocks = R.keys(this.loadedBlocks)
     const blocksThatShouldBeLoaded = R.keys(blocksToLoad)
 
-    const blocksToRemove = R.difference(currentlyLoadedBlocks, blocksThatShouldBeLoaded)
-    const blocksToAdd = R.difference(blocksThatShouldBeLoaded, currentlyLoadedBlocks)
+    const blocksToRemove = shouldClear ? currentlyLoadedBlocks : R.difference(currentlyLoadedBlocks, blocksThatShouldBeLoaded)
+    const blocksToAdd = shouldClear ? blocksThatShouldBeLoaded : R.difference(blocksThatShouldBeLoaded, currentlyLoadedBlocks)
 
     for (const blockId of blocksToRemove) {
       const blockDescription = this.loadedBlocks[blockId]
@@ -87,16 +139,36 @@ export class GenerativeWorldEffector<TPhysics> extends GameEffector<IWorldGenera
       }
 
       var uuidsInBlock: string[] = []
+      const spawnAtGridPos = (x: number, y: number, cls: IActorClass<IComponentsState, IComponents, IActor<IComponents>>) => {
+        uuidsInBlock.push(this.world.spawn(cls, {
+          position: {
+            x: x*gridSize,
+            y: y*gridSize,
+          }
+        }).uuid)
+      }
+
       for (var x=p.x-halfBlockSize; x<p.x+halfBlockSize; x++) {
         for (var y=p.y-halfBlockSize; y<p.y+halfBlockSize; y++) {
-          if (this.hasBlockAtGridPos({x: x, y: y})) {
-            debugLog('spawning block')
-            uuidsInBlock.push(this.world.spawn(BlockActor, {
-              position: {
-                x: x*gridSize,
-                y: y*gridSize,
-              }
-            }).uuid)
+          var spawnType = SpawnType.None
+
+          const xIndex = ((x % mapWidth) + mapWidth) % mapWidth
+          if (y <= groundLevel) {
+            const yIndex = groundLevel - y
+            if (yIndex >= belowGround.length) {
+              spawnType = SpawnType.Block
+            } else {
+              spawnType = belowGround[yIndex][xIndex]
+            }
+          } else {
+            const yIndex = y - groundLevel - 1
+            if (yIndex < aboveGround.length) {
+              spawnType = aboveGround[yIndex][xIndex]
+            }
+          }
+
+          if (spawnType == SpawnType.Block) {
+            spawnAtGridPos(x, y, BlockActor)
           }
         }
       }
@@ -105,17 +177,6 @@ export class GenerativeWorldEffector<TPhysics> extends GameEffector<IWorldGenera
         uuids: uuidsInBlock
       }
     }
-  }
-
-  hasBlockAtGridPos = (pos: IVector2d): boolean => {
-    if ((window as any).levelFunc) {
-      return (window as any).levelFunc(pos)
-    }
-
-    if (pos.y == -1) {
-      return true
-    }
-    return false
   }
 
   pixelate = (pos: IVector2d, size: number): IVector2d => {
