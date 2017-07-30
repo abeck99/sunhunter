@@ -5,59 +5,79 @@ import * as PIXI from "pixi.js"
 export class Component<TComponentConfig, TComponents> implements IComponent<TComponentConfig, TComponents> {
   actor: IActor<TComponents>
   world?: IWorld<TComponents>
-  config?: TComponentConfig
-  didCallHasWorldAndConfig: boolean
+  config: TComponentConfig
 
   constructor(actor: IActor<TComponents>, config: TComponentConfig) {
     this.actor = actor
-    this.didCallHasWorldAndConfig = false
-    this.init(config)
+    this.loaded = false
+    this.wasAddedToWorld = false
+    this.config = config
   }
 
-  hasWorldAndConfig_ = () => {
+  loaded: boolean
+  wasAddedToWorld: boolean
 
-  }
-  hasWorldAndConfig = () => {
-    this.hasWorldAndConfig_()
+  shouldBeInWorld = (): boolean => {
+    return this.world && this.loaded
   }
 
-  checkIfHasWorldAndConfig = () => {
-    if (!this.didCallHasWorldAndConfig && this.world && this.config) {
-      this.didCallHasWorldAndConfig = true
-      this.hasWorldAndConfig()
+  dispatchAddRemoveIfNeeded = () => {
+    if (!this.wasAddedToWorld && this.shouldBeInWorld()) {
+      this.wasAddedToWorld = true
+      this.addToWorldPartTwo()
+    } else if (this.wasAddedToWorld && !this.shouldBeInWorld()) {
+      this.wasAddedToWorld = false
+      this.removeFromWorldPartTwo()
     }
   }
 
-  init_ = (config: TComponentConfig) => {
-    this.config = config
-    this.checkIfHasWorldAndConfig()
+  addToWorldPartTwo = () => {
+    console.log("SHOLDNO BE HERE")
   }
-  init = (config: TComponentConfig) => {
-    this.init_(config)
-  }
+  removeFromWorldPartTwo = () => {}
 
-  addToWorld_ = (world: IWorld<TComponents>) => {
+  setWorld = (world: IWorld<TComponents>) => {
     this.world = world
-    this.checkIfHasWorldAndConfig()
-  }
-  addToWorld = (world: IWorld<TComponents>) => {
-    this.addToWorld_(world)
+    this.dispatchAddRemoveIfNeeded()
   }
 
-  removeFromWorld_ = (world: IWorld<TComponents>) => {
-    this.world = null
-  }
-  removeFromWorld = (world: IWorld<TComponents>) => {
-    this.removeFromWorld_(world)
+  setLoaded = (isLoaded: boolean) => {
+    this.loaded = isLoaded
+    this.dispatchAddRemoveIfNeeded()
   }
 
-  tick_ = (elapsedTime: number) => {}
-  tick = (elapsedTime: number) => {
-    this.tick_(elapsedTime)
-  }
+  tick = (elapsedTime: number) => {}
 }
 
 
+
+
+export interface IPositionConfig {
+  x?: number,
+  y?: number
+}
+
+export class PositionComponent extends Component<IPositionConfig, IComponents> {
+  static configDefaults = {
+    x: 0,
+    y: 0,
+  }
+
+  x: number
+  y: number
+
+  addToWorldPartTwo = () => {
+    this.x = this.config.x
+    this.y = this.config.y
+  }
+
+  tick = (timeElapsed: number) => {
+  }
+}
+
+{
+ const _: IComponentClass<IPositionConfig, IComponents, PositionComponent> = PositionComponent
+}
 
 
 export interface ISpriteConfig {
@@ -65,6 +85,12 @@ export interface ISpriteConfig {
 }
 
 export class SpriteComponent extends Component<ISpriteConfig, IComponents> {
+  static configDefaults = {
+    asset: {
+      url: 'none'
+    }
+  }
+
   sprite?: PIXI.Sprite
 
   static assetsToLoad = (config: ISpriteConfig): IAsset[] => {
@@ -73,53 +99,84 @@ export class SpriteComponent extends Component<ISpriteConfig, IComponents> {
     ]
   }
 
-  hasWorldAndConfig = () => {
-    this.hasWorldAndConfig_()
+  addToWorldPartTwo = () => {
     this.sprite = new PIXI.Sprite(this.world.getTexture(this.config.asset))
     this.world.container.addChild(this.sprite)
   }
 
-  init = (config: ISpriteConfig) => {
-    this.init_(config)
-  }
-
-  addToWorld = (world: IWorld<IComponents>) => {
-    this.addToWorld_(world)
-  }
-
-  removeFromWorld = (world: IWorld<IComponents>) => {
-    this.removeFromWorld_(world)
-  }
-
   tick = (timeElapsed: number) => {
-    this.tick_(timeElapsed)
+    if (this.sprite && this.actor.components.position) {
+      this.sprite.x = this.actor.components.position.x
+      this.sprite.y = this.actor.components.position.y
+      console.log(this.sprite.x)
+    }
   }
 }
 
-const _: IComponentClass<ISpriteConfig, IComponents, SpriteComponent> = SpriteComponent
+{
+ const _: IComponentClass<ISpriteConfig, IComponents, SpriteComponent> = SpriteComponent
+}
 
 
+export interface IVelocityComponent {
+  x?: number,
+  y?: number
+}
+
+export class VelocityComponent extends Component<IVelocityComponent, IComponents> {
+  static configDefaults = {
+    x: 0,
+    y: 0,
+  }
+
+  x: number
+  y: number
+
+  addToWorldPartTwo = () => {
+    this.x = this.config.x
+    this.y = this.config.y
+  }
+
+  tick = (timeElapsed: number) => {
+    console.log(`velocity: ${this.x}`)
+    this.actor.components.position.x += this.x*timeElapsed
+    this.actor.components.position.y += this.y*timeElapsed
+  }
+}
+
+{
+ const _: IComponentClass<IVelocityComponent, IComponents, VelocityComponent> = VelocityComponent
+}
 
 
-
-// Component definitions
-// import { ISpriteConfig, SpriteComponent } from './components/sprite'
 
 export interface IConfig {
 
+position?: IPositionConfig
+
 sprite?: ISpriteConfig
+
+velocity?: IVelocityComponent
 
 }
 
 export interface IComponents {
 
+position?: PositionComponent
+
 sprite?: SpriteComponent
+
+velocity?: VelocityComponent
 
 }
 
 const componentClasses = {
 
+position: PositionComponent,
+
 sprite: SpriteComponent,
+
+velocity: VelocityComponent,
 
 }
 

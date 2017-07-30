@@ -2,7 +2,7 @@ import * as PIXI from "pixi.js"
 import * as id from 'shortid'
 import * as Promise from 'bluebird'
 import * as R from 'ramda'
-import { IActorClass, IActor, IWorld, IComponent, IActorFactory, TickFunction, ISpawnInfo, IAsset } from './types'
+import { IActorClass, IActor, IWorld, IComponent, IActorFactory, TickFunction, IAsset } from './types'
 
 export interface IWorldConfig {
   updateTick: TickFunction
@@ -57,18 +57,16 @@ export class World<TComponents> implements IWorld<TComponents> {
 
   addActorToWorld = (actor: IActor<TComponents>) => {
     R.mapObjIndexed((component, componentName) => {
-      component.addToWorld(this)
+      component.setWorld(this)
     }, actor.components)
   }
 
-  spawn = <TConfig, T extends IActor<TComponents>>(cls: IActorClass<TConfig, TComponents, T>, config: TConfig): ISpawnInfo<T> => {
+  spawn = <TConfig>(cls: IActorClass<TConfig, TComponents, IActor<TComponents>>, config: TConfig): IActor<TComponents> => {
     const uuid = id.generate()
-    const promise = this.factory.create(uuid, cls, config)
-      .then((actor) => {
-        this.actors[uuid] = actor
-        this.addActorToWorld(actor)
-      })
-    return { uuid, promise }
+    const actor = this.factory.create(uuid, cls, config)
+    this.actors[uuid] = actor
+    this.addActorToWorld(actor)
+    return actor
   }
 
   getTexture = (asset: IAsset): PIXI.Texture => {

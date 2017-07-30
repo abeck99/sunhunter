@@ -13,15 +13,19 @@ export type TickFunction = (timeElapsed: number) => void
 // Component definitions
 export interface IComponent<TComponentConfig, TComponents> {
   actor: IActor<TComponents>
-  init: (config: TComponentConfig) => void
-  addToWorld: (world: IWorld<TComponents>) => void
-  removeFromWorld: (world: IWorld<TComponents>) => void
   tick: TickFunction
+
+  addToWorldPartTwo: () => void
+  removeFromWorldPartTwo: () => void
+
+  setWorld: (world: IWorld<TComponents>) => void
+  setLoaded: (isLoaded: boolean) => void
 }
 
 export interface IComponentClass<TComponentConfig, TComponents, InstanceType extends IComponent<TComponentConfig, TComponents>> {
   new(actor: IActor<TComponents>, config: TComponentConfig): IComponent<TComponentConfig, TComponents>
-  assetsToLoad: (config: TComponentConfig) => IAsset[]
+  assetsToLoad?: (config: TComponentConfig) => IAsset[]
+  configDefaults: TComponentConfig
 }
 // validate class static methods with 
 // const _: IComponentClass<SomeConfig, any, SomeComponentClass> = SomeComponentClass<SomeConfig>
@@ -37,7 +41,7 @@ export interface ISpawnInfo<T> {
 export interface IWorld<TComponents> {
   container: Container
   getView: () => HTMLElement
-  spawn: <TConfig, T extends IActor<TComponents>>(cls: IActorClass<TConfig, TComponents, T>, config: TConfig) => ISpawnInfo<T>
+  spawn: <TConfig>(cls: IActorClass<TConfig, TComponents, IActor<TComponents>>, config: TConfig) => IActor<TComponents>
   getTexture: (asset: IAsset) => Texture
 }
 
@@ -58,5 +62,5 @@ export interface IActorClass<TConfig, TComponents, InstanceType extends IActor<T
 // const _: IActorClass<TAssets, TLoadedAssets, TComponents, SomeActorClass> = SomeActorClass<TComponents>
 
 export interface IActorFactory<TComponents> {
-  create: <TConfig, T extends IActor<TComponents>>(uuid: string, cls: IActorClass<TConfig, TComponents, T>, inConfig: TConfig) => Promise<T>
+  create: <TConfig>(uuid: string, cls: IActorClass<TConfig, TComponents, IActor<TComponents>>, inConfig: TConfig) => IActor<TComponents>
 }

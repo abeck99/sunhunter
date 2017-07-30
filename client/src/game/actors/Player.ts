@@ -7,7 +7,9 @@ export class PlayerActor extends Actor {
       asset: {
         url: "assets/test/char.png"
       }
-    }
+    },
+    position: {},
+    velocity: {x:1},
   }
 }
 

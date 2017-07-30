@@ -1,0 +1,27 @@
+velocity,IVelocityComponent,VelocityComponent
+
+export interface IVelocityComponent {
+  x?: number,
+  y?: number
+}
+
+export class VelocityComponent extends Component<IVelocityComponent, IComponents> {
+  static configDefaults = {
+    x: 0,
+    y: 0,
+  }
+
+  x: number
+  y: number
+
+  addToWorldPartTwo = () => {
+    this.x = this.config.x
+    this.y = this.config.y
+  }
+
+  tick = (timeElapsed: number) => {
+    console.log(`velocity: ${this.x}`)
+    this.actor.components.position.x += this.x*timeElapsed
+    this.actor.components.position.y += this.y*timeElapsed
+  }
+}

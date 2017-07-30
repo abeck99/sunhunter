@@ -92,73 +92,79 @@ export class ActorFactory<TComponents> implements IActorFactory<TComponents> {
     this.loadPromises = newLoadPromises
   }
 
-  create = <TConfig, T extends IActor<TComponents>>(uuid: string, cls: IActorClass<TConfig, TComponents, T>, inConfig: TConfig): Promise<T> => {
+  create = <TConfig>(uuid: string, cls: IActorClass<TConfig, TComponents, IActor<TComponents>>, inConfig: TConfig): IActor<TComponents> => {
+    const actor = new cls(uuid)
+
     const promise = defer()
 
     const config = R.merge(cls.defaults, inConfig)
 
-    const assetsRequested: IAsset[] = [] 
-    R.mapObjIndexed((componentConfig, componentName) => {
-        const componentClass = this.componentClasses[componentName]
-        if (componentClass) {
-          for (const asset of componentClass.assetsToLoad(componentConfig)) {
-            assetsRequested.push(asset)
-          }
-        }
-      }, config)
+    R.mapObjIndexed((inComponentConfig, componentName) => {
+      const promise = defer()
 
-    const assetsByKey = getAssetsByKey(assetsRequested)
-    const assetKeys = R.keys(assetsByKey)
+      const componentClass = this.componentClasses[componentName]
+      
+      if (!componentClass) {
+        console.log(`Unknown component ${componentName}`)
+        return
+      }
 
-    const hasLoadedAllAssetKeys = R.all((assetKey: string): boolean => {
-      return this.loadStates[assetKey] == LoadState.Loaded
-    })
+      const componentConfig = R.merge(componentClass.configDefaults, inComponentConfig)
+      const newComponent = new componentClass(actor, componentConfig)
+      actor.components[componentName] = newComponent
 
-    // TODO: Defer loading specific components based on assets, and create the actor immediately
-    if (hasLoadedAllAssetKeys(assetKeys)) {
-      promise.resolve(true)
-    } else {
-      this.loadPromises.push({
-        assetKeys, promise
+      const assetsFunc = componentClass.assetsToLoad
+      const assetsRequested = assetsFunc ? assetsFunc(componentConfig) : []
+      const assetsByKey = getAssetsByKey(assetsRequested)
+      const assetKeys = R.keys(assetsByKey)
+
+      const hasLoadedAllAssetKeys = R.all((assetKey: string): boolean => {
+        return this.loadStates[assetKey] == LoadState.Loaded
       })
 
-      var assetKeysToLoad: string[] = []
-      for (const assetKey of assetKeys) {
-        if (this.loadStates[assetKey] == undefined) {
-          assetKeysToLoad.push(assetKey)
-        }
-      }
-
-      if (assetKeysToLoad.length > 0) {
-        const assetsToLoadByKey: IAssetCollection = R.pick(
-          assetKeysToLoad, assetsByKey
-        )
-        const assetsToLoad = R.values(assetsToLoadByKey)
-
-        console.log(`loading assets .. ${assetsToLoad.length} --- ${assetsToLoad}`)
-
-        for (const assetKey of assetsToLoad) {
-          console.log(`key: ${assetKey}`)
-        }
-
-        loader.add(assetsToLoad).load(() => {
-          this.finishLoad(assetKeysToLoad)
+      // All assets are loaded (note this returns true on an empty list too) so immediately resolve promise
+      if (hasLoadedAllAssetKeys(assetKeys)) {
+        promise.resolve(true)
+      } else {
+        this.loadPromises.push({
+          assetKeys, promise
         })
-      }
-    }
 
-    return promise.then(() => {
-      const actor = new cls(uuid)
-
-      R.mapObjIndexed((componentConfig, componentName) => {
-        const componentClass = this.componentClasses[componentName]
-        if (componentClass) {
-          const newComponent = new componentClass(actor, componentConfig)
-          actor.components[componentName] = newComponent
+        // Search for any assets not currently loading (prevent two attempted loads at once)
+        var assetKeysToLoad: string[] = []
+        for (const assetKey of assetKeys) {
+          if (this.loadStates[assetKey] == undefined) {
+            assetKeysToLoad.push(assetKey)
+          }
         }
-      }, config)
+  
+        // If assetKeysToLoad.length is 0 then all assets were already pending load so no work is required
+        // Otherwise start loading the ones that weren't pending
+        if (assetKeysToLoad.length > 0) {
+          const assetsToLoadByKey: IAssetCollection = R.pick(
+            assetKeysToLoad, assetsByKey
+          )
+          const assetsToLoad = R.values(assetsToLoadByKey)
+  
+          console.log(`loading assets .. ${assetsToLoad.length} --- ${assetsToLoad}`)
+  
+          for (const assetKey of assetsToLoad) {
+            console.log(`key: ${assetKey}`)
+          }
+  
+          loader.add(assetsToLoad).load(() => {
+            this.finishLoad(assetKeysToLoad)
+          })
+        }
+      }
 
-      return actor
-    })
+      // When promise completes, all assets are loaded
+      promise.then(() => {
+        console.log('LOADED FINISHED!')
+        newComponent.setLoaded(true)
+      })
+    }, config)
+
+    return actor
   }
 }
