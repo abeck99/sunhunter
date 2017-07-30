@@ -46,6 +46,7 @@ export interface IWorld<TPhysics, TComponents> {
   spawn: <TComponentsState>(cls: IActorClass<TComponentsState, TComponents, IActor<TComponents>>, state: TComponentsState) => IActor<TComponents>
   spawnWithId: <TComponentsState>(uuid: string, cls: IActorClass<TComponentsState, TComponents, IActor<TComponents>>, state: TComponentsState) => IActor<TComponents>
   removeActorFromWorld: (actor: IActor<TComponents>) => void
+  removeActorFromWorldWithId: (uuid: string) => void
 
   getTexture: (asset: IAsset) => Texture
   serialize: () => string

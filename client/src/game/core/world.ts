@@ -48,6 +48,13 @@ export class World<TPhysics, TComponents> implements IWorld<TPhysics, TComponent
     }, actor.components)
   }
 
+  removeActorFromWorldWithId = (uuid: string) => {
+    const actor = this.getActor(uuid)
+    if (actor) {
+      this.removeActorFromWorld(actor)
+    }
+  }
+
   spawn = <TComponentsState>(cls: IActorClass<TComponentsState, TComponents, IActor<TComponents>>, state: TComponentsState): IActor<TComponents> => {
     const uuid = id.generate()
     return this.spawnWithId<TComponentsState>(uuid, cls, state)
