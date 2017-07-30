@@ -20,7 +20,6 @@ export class VelocityComponent extends Component<IVelocityComponent, IComponents
   }
 
   tick = (timeElapsed: number) => {
-    console.log(`velocity: ${this.x}`)
     this.actor.components.position.x += this.x*timeElapsed
     this.actor.components.position.y += this.y*timeElapsed
   }
