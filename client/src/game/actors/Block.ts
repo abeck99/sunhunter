@@ -1,16 +1,15 @@
 import { IActorClass } from '../core/types'
 import { IComponentsState, IComponents, Actor } from '../defs'
 
-export class PlayerActor extends Actor {
+export class BlockActor extends Actor {
   static defaults: IComponentsState = {
     sprite: {
       asset: {
-        url: "assets/test/char.png"
+        url: "assets/test/block.png"
       }
     },
     position: {},
-    velocity: {},
   }
 }
 
-const _: IActorClass<IComponentsState, IComponents, PlayerActor> = PlayerActor
+const _: IActorClass<IComponentsState, IComponents, BlockActor> = BlockActor

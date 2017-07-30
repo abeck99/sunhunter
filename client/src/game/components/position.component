@@ -1,22 +1,14 @@
-position,IPositionConfig,PositionComponent
+position,IPositionState,PositionComponent
 
-export interface IPositionConfig {
-  x?: number,
+export interface IPositionState {
+  x?: number
   y?: number
 }
 
-export class PositionComponent extends Component<IPositionConfig, IComponents> {
-  static configDefaults = {
+export class PositionComponent extends Component<IPositionState, IComponents> {
+  static defaultState = {
     x: 0,
     y: 0,
-  }
-
-  x: number
-  y: number
-
-  addToWorldPartTwo = () => {
-    this.x = this.config.x
-    this.y = this.config.y
   }
 
   tick = (timeElapsed: number) => {

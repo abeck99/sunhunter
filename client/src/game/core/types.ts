@@ -11,7 +11,7 @@ export type TickFunction = (timeElapsed: number) => void
 
 
 // Component definitions
-export interface IComponent<TComponentConfig, TComponents> {
+export interface IComponent<TComponentState, TComponents> {
   actor: IActor<TComponents>
   tick: TickFunction
 
@@ -20,12 +20,14 @@ export interface IComponent<TComponentConfig, TComponents> {
 
   setWorld: (world: IWorld<TComponents>) => void
   setLoaded: (isLoaded: boolean) => void
+
+  getState: () => TComponentState
 }
 
-export interface IComponentClass<TComponentConfig, TComponents, InstanceType extends IComponent<TComponentConfig, TComponents>> {
-  new(actor: IActor<TComponents>, config: TComponentConfig): IComponent<TComponentConfig, TComponents>
-  assetsToLoad?: (config: TComponentConfig) => IAsset[]
-  configDefaults: TComponentConfig
+export interface IComponentClass<TComponentState, TComponents, InstanceType extends IComponent<TComponentState, TComponents>> {
+  new(actor: IActor<TComponents>, state: TComponentState): IComponent<TComponentState, TComponents>
+  assetsToLoad?: (state: TComponentState) => IAsset[]
+  defaultState: TComponentState
 }
 // validate class static methods with 
 // const _: IComponentClass<SomeConfig, any, SomeComponentClass> = SomeComponentClass<SomeConfig>
@@ -33,34 +35,41 @@ export interface IComponentClass<TComponentConfig, TComponents, InstanceType ext
 
 
 // World definitions
-export interface ISpawnInfo<T> {
-  uuid: string
-  promise: Promise<T>
-}
-
 export interface IWorld<TComponents> {
   container: Container
   getView: () => HTMLElement
-  spawn: <TConfig>(cls: IActorClass<TConfig, TComponents, IActor<TComponents>>, config: TConfig) => IActor<TComponents>
-  getTexture: (asset: IAsset) => Texture
-}
+  
+  spawn: <TComponentsState>(cls: IActorClass<TComponentsState, TComponents, IActor<TComponents>>, state: TComponentsState) => IActor<TComponents>
+  removeActorFromWorld: (actor: IActor<TComponents>) => void
 
+  getTexture: (asset: IAsset) => Texture
+  serialize: () => string
+  deserialize: <TComponentsState>(serializedState: string, isCopy: boolean, cls: IActorClass<TComponentsState, TComponents, IActor<TComponents>>) => void
+
+  getActor: (uuid: string) => IActor<TComponents>
+}
 
 
 // Actor definitions
 export interface IActor<TComponents> {
   uuid: string
   components: TComponents
+  getState: <TComponentsState>() => IActorState<TComponentsState>
 }
 
-export interface IActorClass<TConfig, TComponents, InstanceType extends IActor<TComponents>> {
+export interface IActorState<TComponentsState> {
+  uuid: string
+  state: TComponentsState
+}
+
+export interface IActorClass<TComponentsState, TComponents, InstanceType extends IActor<TComponents>> {
   new(uuid: string): IActor<TComponents>
-  defaults: TConfig
+  defaults: TComponentsState
 }
 
 // validate class static methods with 
 // const _: IActorClass<TAssets, TLoadedAssets, TComponents, SomeActorClass> = SomeActorClass<TComponents>
 
 export interface IActorFactory<TComponents> {
-  create: <TConfig>(uuid: string, cls: IActorClass<TConfig, TComponents, IActor<TComponents>>, inConfig: TConfig) => IActor<TComponents>
+  create: <TActorState>(uuid: string, cls: IActorClass<TActorState, TComponents, IActor<TComponents>>, inState: TActorState) => IActor<TComponents>
 }

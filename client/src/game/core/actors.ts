@@ -92,14 +92,14 @@ export class ActorFactory<TComponents> implements IActorFactory<TComponents> {
     this.loadPromises = newLoadPromises
   }
 
-  create = <TConfig>(uuid: string, cls: IActorClass<TConfig, TComponents, IActor<TComponents>>, inConfig: TConfig): IActor<TComponents> => {
+  create = <TActorState>(uuid: string, cls: IActorClass<TActorState, TComponents, IActor<TComponents>>, inState: TActorState): IActor<TComponents> => {
     const actor = new cls(uuid)
 
     const promise = defer()
 
-    const config = R.merge(cls.defaults, inConfig)
+    const actorState = R.merge(cls.defaults, inState)
 
-    R.mapObjIndexed((inComponentConfig, componentName) => {
+    R.mapObjIndexed((inComponentState, componentName) => {
       const promise = defer()
 
       const componentClass = this.componentClasses[componentName]
@@ -109,12 +109,12 @@ export class ActorFactory<TComponents> implements IActorFactory<TComponents> {
         return
       }
 
-      const componentConfig = R.merge(componentClass.configDefaults, inComponentConfig)
-      const newComponent = new componentClass(actor, componentConfig)
+      const componentState = R.merge(componentClass.defaultState, inComponentState)
+      const newComponent = new componentClass(actor, componentState)
       actor.components[componentName] = newComponent
 
       const assetsFunc = componentClass.assetsToLoad
-      const assetsRequested = assetsFunc ? assetsFunc(componentConfig) : []
+      const assetsRequested = assetsFunc ? assetsFunc(componentState) : []
       const assetsByKey = getAssetsByKey(assetsRequested)
       const assetKeys = R.keys(assetsByKey)
 
@@ -163,7 +163,7 @@ export class ActorFactory<TComponents> implements IActorFactory<TComponents> {
         console.log('LOADED FINISHED!')
         newComponent.setLoaded(true)
       })
-    }, config)
+    }, actorState)
 
     return actor
   }

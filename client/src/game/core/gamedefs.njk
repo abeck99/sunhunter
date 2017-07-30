@@ -1,17 +1,18 @@
 import { IComponentClass, IAsset } from './core/types'
 import * as PIXI from "pixi.js"
+import * as R from 'ramda'
 
 
-export class Component<TComponentConfig, TComponents> implements IComponent<TComponentConfig, TComponents> {
+export class Component<TComponentState, TComponents> implements IComponent<TComponentState, TComponents> {
   actor: IActor<TComponents>
   world?: IWorld<TComponents>
-  config: TComponentConfig
+  state: TComponentState
 
-  constructor(actor: IActor<TComponents>, config: TComponentConfig) {
+  constructor(actor: IActor<TComponents>, state: TComponentState) {
     this.actor = actor
     this.loaded = false
     this.wasAddedToWorld = false
-    this.config = config
+    this.state = state
   }
 
   loaded: boolean
@@ -47,20 +48,24 @@ export class Component<TComponentConfig, TComponents> implements IComponent<TCom
   }
 
   tick = (elapsedTime: number) => {}
+
+  getState = (): TComponentState => {
+    return this.state
+  }
 }
 
 
 {% for component in components %}
 {{ component.body }}
 {
- const _: IComponentClass<{{ component.config }}, IComponents, {{ component.className }}> = {{ component.className }}
+ const _: IComponentClass<{{ component.state }}, IComponents, {{ component.className }}> = {{ component.className }}
 }
 {% endfor %}
 
 
-export interface IConfig {
+export interface IComponentsState {
 {% for component in components %}
-{{ component.name }}?: {{ component.config }}
+{{ component.name }}?: {{ component.state }}
 {% endfor %}
 }
 
@@ -81,17 +86,30 @@ const componentClasses = {
 // Concrete classes using definitions
 import { ActorFactory } from './core/actors'
 import { World, IWorldConfig } from './core/world'
-import { IActor, IWorld, IComponent } from './core/types'
+import { IActor, IWorld, IComponent, IActorState } from './core/types'
 
 export class Actor implements IActor<IComponents> {
   uuid: string
   components: IComponents
 
-  static defaults: {}
+  static defaults: IComponentsState = {}
 
   constructor(uuid: string) {
     this.uuid = uuid
     this.components = {}
+  }
+
+  getState = <TComponentsState>(): IActorState<TComponentsState> => {
+    var state = {} as TComponentsState
+
+    R.mapObjIndexed((component, componentName) => {
+      state[componentName] = component.getState()
+    }, this.components)
+
+    return {
+      uuid: this.uuid,
+      state: state,
+    }
   }
 }
 

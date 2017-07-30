@@ -1,26 +1,25 @@
-velocity,IVelocityComponent,VelocityComponent
+velocity,IVelocityState,VelocityComponent
 
-export interface IVelocityComponent {
-  x?: number,
+export interface IVelocityState {
+  x?: number
   y?: number
 }
 
-export class VelocityComponent extends Component<IVelocityComponent, IComponents> {
-  static configDefaults = {
+export class VelocityComponent extends Component<IVelocityState, IComponents> {
+  static defaultState = {
     x: 0,
     y: 0,
   }
 
-  x: number
-  y: number
-
-  addToWorldPartTwo = () => {
-    this.x = this.config.x
-    this.y = this.config.y
+  tick = (timeElapsed: number) => {
+    if (this.actor.components.position) {
+      this.actor.components.position.state.x += this.state.x*timeElapsed
+      this.actor.components.position.state.y += this.state.y*timeElapsed
+    }
   }
 
-  tick = (timeElapsed: number) => {
-    this.actor.components.position.x += this.x*timeElapsed
-    this.actor.components.position.y += this.y*timeElapsed
+  applyForce = (x: number, y: number) => {
+    this.state.x += x
+    this.state.y += y
   }
 }

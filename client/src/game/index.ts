@@ -1,20 +1,38 @@
 import * as PIXI from "pixi.js"
-//import { insideBackground } from './util/colors'
-import { PlayerActor } from './actors/Player'
 import { IWorld } from './core/types'
 import { IComponents, makeWorld } from './defs'
+import { insideBackground } from './util/colors'
+import { GameMode } from './core/modes'
+import { TestMode } from './modes/test'
+
 
 export class Game {
   private world: IWorld<IComponents>
 
-  playerId: string
+  mode?: GameMode<IComponents>
 
   constructor() {
     this.world = makeWorld({
       updateTick: this.tick,
+      renderOptions: {
+        backgroundColor: insideBackground.medium,
+      }
     })
 
-    this.playerId = this.world.spawn(PlayerActor, {}).uuid
+    this.setMode(new TestMode(this.world))
+  }
+
+  setMode = (mode: GameMode<IComponents>) => {
+    if (this.mode) {
+      this.mode.stop()
+      this.mode.cleanup()
+    }
+
+    this.mode = mode
+
+    if (this.mode) {
+      this.mode.start()
+    }
   }
 
   getView = (): HTMLElement => {

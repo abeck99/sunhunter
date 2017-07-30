@@ -32,13 +32,13 @@ module.exports = {
       },
     }),
     new NunjucksPreprocessPlugin(),
-    new WatchIgnorePlugin([
-        path.resolve(__dirname, './src/game/defs.ts'),
-    ]),
-    new FileWatcherPlugin({
-        root: path.resolve(__dirname, './src/game/components/'),
-        files: ['*.component']
-    })
+    //new WatchIgnorePlugin([
+    //    path.resolve(__dirname, './src/game/defs.ts'),
+    //]),
+    //new FileWatcherPlugin({
+    //    root: path.resolve(__dirname, './src/game/components/'),
+    //    files: ['*.component']
+    //})
     ],
   module: {
     loaders: [

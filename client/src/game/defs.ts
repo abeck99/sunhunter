@@ -1,17 +1,18 @@
 import { IComponentClass, IAsset } from './core/types'
 import * as PIXI from "pixi.js"
+import * as R from 'ramda'
 
 
-export class Component<TComponentConfig, TComponents> implements IComponent<TComponentConfig, TComponents> {
+export class Component<TComponentState, TComponents> implements IComponent<TComponentState, TComponents> {
   actor: IActor<TComponents>
   world?: IWorld<TComponents>
-  config: TComponentConfig
+  state: TComponentState
 
-  constructor(actor: IActor<TComponents>, config: TComponentConfig) {
+  constructor(actor: IActor<TComponents>, state: TComponentState) {
     this.actor = actor
     this.loaded = false
     this.wasAddedToWorld = false
-    this.config = config
+    this.state = state
   }
 
   loaded: boolean
@@ -47,28 +48,63 @@ export class Component<TComponentConfig, TComponents> implements IComponent<TCom
   }
 
   tick = (elapsedTime: number) => {}
+
+  getState = (): TComponentState => {
+    return this.state
+  }
 }
 
 
 
 
-export interface IPositionConfig {
-  x?: number,
+export interface IDragState {
+  x?: number
   y?: number
 }
 
-export class PositionComponent extends Component<IPositionConfig, IComponents> {
-  static configDefaults = {
+export class DragComponent extends Component<IDragState, IComponents> {
+  static defaultState = {
     x: 0,
     y: 0,
   }
 
-  x: number
-  y: number
+  tick = (timeElapsed: number) => {
+    if (this.actor.components.velocity) {
+      this.actor.components.velocity.state.x = Math.max(0, this.actor.components.velocity.state.x - (this.state.x*timeElapsed))
+      this.actor.components.velocity.state.y = Math.max(0, this.actor.components.velocity.state.y - (this.state.y*timeElapsed))
+    }
+  }
+}
 
-  addToWorldPartTwo = () => {
-    this.x = this.config.x
-    this.y = this.config.y
+{
+ const _: IComponentClass<IDragState, IComponents, DragComponent> = DragComponent
+}
+
+
+export interface INetState {
+  x: boolean
+}
+
+export class NetworkedComponent extends Component<INetState, IComponents> {
+  static defaultState = {
+    x: true,
+  }
+}
+
+{
+ const _: IComponentClass<INetState, IComponents, NetworkedComponent> = NetworkedComponent
+}
+
+
+export interface IPositionState {
+  x?: number
+  y?: number
+}
+
+export class PositionComponent extends Component<IPositionState, IComponents> {
+  static defaultState = {
+    x: 0,
+    y: 0,
   }
 
   tick = (timeElapsed: number) => {
@@ -76,16 +112,16 @@ export class PositionComponent extends Component<IPositionConfig, IComponents> {
 }
 
 {
- const _: IComponentClass<IPositionConfig, IComponents, PositionComponent> = PositionComponent
+ const _: IComponentClass<IPositionState, IComponents, PositionComponent> = PositionComponent
 }
 
 
-export interface ISpriteConfig {
+export interface ISpriteState {
   asset: IAsset
 }
 
-export class SpriteComponent extends Component<ISpriteConfig, IComponents> {
-  static configDefaults = {
+export class SpriteComponent extends Component<ISpriteState, IComponents> {
+  static defaultState = {
     asset: {
       url: 'none'
     }
@@ -93,74 +129,79 @@ export class SpriteComponent extends Component<ISpriteConfig, IComponents> {
 
   sprite?: PIXI.Sprite
 
-  static assetsToLoad = (config: ISpriteConfig): IAsset[] => {
+  static assetsToLoad = (state: ISpriteState): IAsset[] => {
     return [
-      config.asset
+      state.asset
     ]
   }
 
   addToWorldPartTwo = () => {
-    this.sprite = new PIXI.Sprite(this.world.getTexture(this.config.asset))
+    this.sprite = new PIXI.Sprite(this.world.getTexture(this.state.asset))
     this.world.container.addChild(this.sprite)
   }
 
   tick = (timeElapsed: number) => {
     if (this.sprite && this.actor.components.position) {
-      this.sprite.x = this.actor.components.position.x
-      this.sprite.y = this.actor.components.position.y
-      console.log(this.sprite.x)
+      this.sprite.x = this.actor.components.position.state.x
+      this.sprite.y = this.actor.components.position.state.y
     }
   }
 }
 
 {
- const _: IComponentClass<ISpriteConfig, IComponents, SpriteComponent> = SpriteComponent
+ const _: IComponentClass<ISpriteState, IComponents, SpriteComponent> = SpriteComponent
 }
 
 
-export interface IVelocityComponent {
-  x?: number,
+export interface IVelocityState {
+  x?: number
   y?: number
 }
 
-export class VelocityComponent extends Component<IVelocityComponent, IComponents> {
-  static configDefaults = {
+export class VelocityComponent extends Component<IVelocityState, IComponents> {
+  static defaultState = {
     x: 0,
     y: 0,
   }
 
-  x: number
-  y: number
-
-  addToWorldPartTwo = () => {
-    this.x = this.config.x
-    this.y = this.config.y
+  tick = (timeElapsed: number) => {
+    if (this.actor.components.position) {
+      this.actor.components.position.state.x += this.state.x*timeElapsed
+      this.actor.components.position.state.y += this.state.y*timeElapsed
+    }
   }
 
-  tick = (timeElapsed: number) => {
-    console.log(`velocity: ${this.x}`)
-    this.actor.components.position.x += this.x*timeElapsed
-    this.actor.components.position.y += this.y*timeElapsed
+  applyForce = (x: number, y: number) => {
+    this.state.x += x
+    this.state.y += y
   }
 }
 
 {
- const _: IComponentClass<IVelocityComponent, IComponents, VelocityComponent> = VelocityComponent
+ const _: IComponentClass<IVelocityState, IComponents, VelocityComponent> = VelocityComponent
 }
 
 
 
-export interface IConfig {
+export interface IComponentsState {
 
-position?: IPositionConfig
+drag?: IDragState
 
-sprite?: ISpriteConfig
+net?: INetState
 
-velocity?: IVelocityComponent
+position?: IPositionState
+
+sprite?: ISpriteState
+
+velocity?: IVelocityState
 
 }
 
 export interface IComponents {
+
+drag?: DragComponent
+
+net?: NetworkedComponent
 
 position?: PositionComponent
 
@@ -171,6 +212,10 @@ velocity?: VelocityComponent
 }
 
 const componentClasses = {
+
+drag: DragComponent,
+
+net: NetworkedComponent,
 
 position: PositionComponent,
 
@@ -185,17 +230,30 @@ velocity: VelocityComponent,
 // Concrete classes using definitions
 import { ActorFactory } from './core/actors'
 import { World, IWorldConfig } from './core/world'
-import { IActor, IWorld, IComponent } from './core/types'
+import { IActor, IWorld, IComponent, IActorState } from './core/types'
 
 export class Actor implements IActor<IComponents> {
   uuid: string
   components: IComponents
 
-  static defaults: {}
+  static defaults: IComponentsState = {}
 
   constructor(uuid: string) {
     this.uuid = uuid
     this.components = {}
+  }
+
+  getState = <TComponentsState>(): IActorState<TComponentsState> => {
+    var state = {} as TComponentsState
+
+    R.mapObjIndexed((component, componentName) => {
+      state[componentName] = component.getState()
+    }, this.components)
+
+    return {
+      uuid: this.uuid,
+      state: state,
+    }
   }
 }
 

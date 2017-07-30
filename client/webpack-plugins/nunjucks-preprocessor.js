@@ -30,7 +30,7 @@ NunjucksPreprocessPlugin.prototype.apply = function(compiler) {
 
         const component = {
           name: componentInfo[0],
-          config: componentInfo[1],
+          state: componentInfo[1],
           className: componentInfo[2],
           body: componentBody,
         }

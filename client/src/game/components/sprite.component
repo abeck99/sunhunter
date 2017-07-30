@@ -1,11 +1,11 @@
-sprite,ISpriteConfig,SpriteComponent
+sprite,ISpriteState,SpriteComponent
 
-export interface ISpriteConfig {
+export interface ISpriteState {
   asset: IAsset
 }
 
-export class SpriteComponent extends Component<ISpriteConfig, IComponents> {
-  static configDefaults = {
+export class SpriteComponent extends Component<ISpriteState, IComponents> {
+  static defaultState = {
     asset: {
       url: 'none'
     }
@@ -13,21 +13,21 @@ export class SpriteComponent extends Component<ISpriteConfig, IComponents> {
 
   sprite?: PIXI.Sprite
 
-  static assetsToLoad = (config: ISpriteConfig): IAsset[] => {
+  static assetsToLoad = (state: ISpriteState): IAsset[] => {
     return [
-      config.asset
+      state.asset
     ]
   }
 
   addToWorldPartTwo = () => {
-    this.sprite = new PIXI.Sprite(this.world.getTexture(this.config.asset))
+    this.sprite = new PIXI.Sprite(this.world.getTexture(this.state.asset))
     this.world.container.addChild(this.sprite)
   }
 
   tick = (timeElapsed: number) => {
     if (this.sprite && this.actor.components.position) {
-      this.sprite.x = this.actor.components.position.x
-      this.sprite.y = this.actor.components.position.y
+      this.sprite.x = this.actor.components.position.state.x
+      this.sprite.y = this.actor.components.position.state.y
     }
   }
 }
