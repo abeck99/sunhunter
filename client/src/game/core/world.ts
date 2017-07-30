@@ -2,59 +2,30 @@ import * as PIXI from "pixi.js"
 import * as id from 'shortid'
 import * as Promise from 'bluebird'
 import * as R from 'ramda'
-import { IActorClass, IActor, IActorState, IWorld, IComponent, IActorFactory, TickFunction, IAsset } from './types'
+import { IActorClass, IActor, IActorState, IWorld, IComponent, IActorFactory, TickFunction, IAsset, UuidToComponentFunction } from './types'
 import { Actor } from '../defs'
 
-export interface IWorldConfig {
-  updateTick: TickFunction
-  renderOptions: PIXI.RendererOptions
-}
-
 export class World<TComponents> implements IWorld<TComponents> {
-  private renderer: PIXI.WebGLRenderer | PIXI.CanvasRenderer
   container: PIXI.Container
-  private frame?: number
 
   private actors: {
     [key: string]: IActor<TComponents>
   }
 
-  private config: IWorldConfig
   private factory: IActorFactory<TComponents>
 
-  constructor(config: IWorldConfig, factory: IActorFactory<TComponents>) {
-    this.config = config
-
-    this.renderer = PIXI.autoDetectRenderer(1366, 768, config.renderOptions);
-    this.renderer.view.style.border = "1px dashed black"
-    this.renderer.view.style.margin = "0 auto";
-    this.renderer.view.style.display = "block";
-    this.renderer.autoResize = true;
-    this.renderer.resize(window.innerWidth-50, window.innerHeight-50);
-
+  constructor(factory: IActorFactory<TComponents>) {
     this.container = new PIXI.Container()
     this.actors = {}
-
     this.factory = factory
-
-    this.render()
   }
 
-  getView = (): HTMLElement => {
-    return this.renderer.view
-  }
-
-  render = () => {
-    const fakeTimeElaspsed = 0.1
-
-    this.config.updateTick(fakeTimeElaspsed)
+  tick = (elapsedTime: number) => {
     for (const actor of R.values(this.actors)) {
       for (const component of R.values(actor.components)) {
-        component.tick(fakeTimeElaspsed)
+        component.tick(elapsedTime)
       }
     }
-    this.renderer.render(this.container)
-    this.frame = requestAnimationFrame(this.render)
   }
 
   addActorToWorld = (actor: IActor<TComponents>) => {
@@ -92,6 +63,19 @@ export class World<TComponents> implements IWorld<TComponents> {
 
   getActor = (uuid: string): IActor<TComponents> => {
     return this.actors[uuid]
+  }
+
+  lens = <TComponentState, TComponent extends IComponent<TComponentState, TComponents>>(
+         lensFunc: (actor: IActor<TComponents>) => TComponent
+        ): UuidToComponentFunction<TComponent> => {
+    return (uuid: string): TComponent => {
+      const actor = this.getActor(uuid)
+      if (actor) {
+        return lensFunc(actor)
+      }
+
+      return undefined
+    }
   }
 
   serialize = (): string => {

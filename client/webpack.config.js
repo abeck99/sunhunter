@@ -14,7 +14,7 @@ module.exports = {
   devtool: 'source-map',
   entry: {
     app: [
-      `${clientPath}/src/index.tsx`
+      `${clientPath}/src/index.tsx`,
       ]
   },
   output: {
@@ -32,9 +32,10 @@ module.exports = {
       },
     }),
     new NunjucksPreprocessPlugin(),
-    //new WatchIgnorePlugin([
-    //    path.resolve(__dirname, './src/game/defs.ts'),
-    //]),
+    new webpack.HotModuleReplacementPlugin({}),
+    new WatchIgnorePlugin([
+        path.resolve(__dirname, './src/game/defs.ts'),
+    ]),
     //new FileWatcherPlugin({
     //    root: path.resolve(__dirname, './src/game/components/'),
     //    files: ['*.component']
@@ -71,7 +72,8 @@ module.exports = {
       },
       {
         enforce: 'post',
-        loader: 'transform-loader?brfs'
+        loader: 'transform-loader?brfs',
+        test: /\.(t|j)sx?$/,
       },
     ]
   },

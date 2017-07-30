@@ -3,6 +3,7 @@ export const Keys = {
   A: 65,
   S: 83,
   D: 68,
+  R: 82,
   SPACEBAR: 32,
 }
 

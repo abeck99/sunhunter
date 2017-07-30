@@ -1,6 +1,7 @@
 import { IComponentClass, IAsset } from './core/types'
 import * as PIXI from "pixi.js"
 import * as R from 'ramda'
+import { UuidToComponentFunction } from './core/types'
 
 
 export class Component<TComponentState, TComponents> implements IComponent<TComponentState, TComponents> {
@@ -33,7 +34,6 @@ export class Component<TComponentState, TComponents> implements IComponent<TComp
   }
 
   addToWorldPartTwo = () => {
-    console.log("SHOLDNO BE HERE")
   }
   removeFromWorldPartTwo = () => {}
 
@@ -80,6 +80,13 @@ export class DragComponent extends Component<IDragState, IComponents> {
  const _: IComponentClass<IDragState, IComponents, DragComponent> = DragComponent
 }
 
+export const dragLens = (world: IWorld<IComponents>): UuidToComponentFunction<DragComponent> => {
+  return world.lens((actor: IActor<IComponents>) => {
+    return actor.components.drag
+  })
+}
+
+
 
 export interface INetState {
   x: boolean
@@ -94,6 +101,13 @@ export class NetworkedComponent extends Component<INetState, IComponents> {
 {
  const _: IComponentClass<INetState, IComponents, NetworkedComponent> = NetworkedComponent
 }
+
+export const netLens = (world: IWorld<IComponents>): UuidToComponentFunction<NetworkedComponent> => {
+  return world.lens((actor: IActor<IComponents>) => {
+    return actor.components.net
+  })
+}
+
 
 
 export interface IPositionState {
@@ -114,6 +128,13 @@ export class PositionComponent extends Component<IPositionState, IComponents> {
 {
  const _: IComponentClass<IPositionState, IComponents, PositionComponent> = PositionComponent
 }
+
+export const positionLens = (world: IWorld<IComponents>): UuidToComponentFunction<PositionComponent> => {
+  return world.lens((actor: IActor<IComponents>) => {
+    return actor.components.position
+  })
+}
+
 
 
 export interface ISpriteState {
@@ -152,6 +173,13 @@ export class SpriteComponent extends Component<ISpriteState, IComponents> {
  const _: IComponentClass<ISpriteState, IComponents, SpriteComponent> = SpriteComponent
 }
 
+export const spriteLens = (world: IWorld<IComponents>): UuidToComponentFunction<SpriteComponent> => {
+  return world.lens((actor: IActor<IComponents>) => {
+    return actor.components.sprite
+  })
+}
+
+
 
 export interface IVelocityState {
   x?: number
@@ -180,6 +208,13 @@ export class VelocityComponent extends Component<IVelocityState, IComponents> {
 {
  const _: IComponentClass<IVelocityState, IComponents, VelocityComponent> = VelocityComponent
 }
+
+export const velocityLens = (world: IWorld<IComponents>): UuidToComponentFunction<VelocityComponent> => {
+  return world.lens((actor: IActor<IComponents>) => {
+    return actor.components.velocity
+  })
+}
+
 
 
 
@@ -229,7 +264,7 @@ velocity: VelocityComponent,
 
 // Concrete classes using definitions
 import { ActorFactory } from './core/actors'
-import { World, IWorldConfig } from './core/world'
+import { World } from './core/world'
 import { IActor, IWorld, IComponent, IActorState } from './core/types'
 
 export class Actor implements IActor<IComponents> {
@@ -258,8 +293,8 @@ export class Actor implements IActor<IComponents> {
 }
 
 export const factory = new ActorFactory<IComponents>(componentClasses)
-export const makeWorld = (worldConfig: IWorldConfig): World<IComponents> => {
-  return new World<IComponents>(worldConfig, factory)
+export const makeWorld = (): World<IComponents> => {
+  return new World<IComponents>(factory)
 }
 
 

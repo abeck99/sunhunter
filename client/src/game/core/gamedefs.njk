@@ -1,6 +1,7 @@
 import { IComponentClass, IAsset } from './core/types'
 import * as PIXI from "pixi.js"
 import * as R from 'ramda'
+import { UuidToComponentFunction } from './core/types'
 
 
 export class Component<TComponentState, TComponents> implements IComponent<TComponentState, TComponents> {
@@ -33,7 +34,6 @@ export class Component<TComponentState, TComponents> implements IComponent<TComp
   }
 
   addToWorldPartTwo = () => {
-    console.log("SHOLDNO BE HERE")
   }
   removeFromWorldPartTwo = () => {}
 
@@ -60,6 +60,13 @@ export class Component<TComponentState, TComponents> implements IComponent<TComp
 {
  const _: IComponentClass<{{ component.state }}, IComponents, {{ component.className }}> = {{ component.className }}
 }
+
+export const {{ component.name }}Lens = (world: IWorld<IComponents>): UuidToComponentFunction<{{ component.className }}> => {
+  return world.lens((actor: IActor<IComponents>) => {
+    return actor.components.{{ component.name }}
+  })
+}
+
 {% endfor %}
 
 
@@ -85,7 +92,7 @@ const componentClasses = {
 
 // Concrete classes using definitions
 import { ActorFactory } from './core/actors'
-import { World, IWorldConfig } from './core/world'
+import { World } from './core/world'
 import { IActor, IWorld, IComponent, IActorState } from './core/types'
 
 export class Actor implements IActor<IComponents> {
@@ -114,8 +121,8 @@ export class Actor implements IActor<IComponents> {
 }
 
 export const factory = new ActorFactory<IComponents>(componentClasses)
-export const makeWorld = (worldConfig: IWorldConfig): World<IComponents> => {
-  return new World<IComponents>(worldConfig, factory)
+export const makeWorld = (): World<IComponents> => {
+  return new World<IComponents>(factory)
 }
 
 

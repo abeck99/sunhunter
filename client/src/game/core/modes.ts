@@ -17,7 +17,7 @@ export class GameMode<TComponents> {
   }
 
   // Override these
-  start = () => {
+  start = (shouldLoadContent: boolean) => {
 
   }
 
@@ -26,6 +26,14 @@ export class GameMode<TComponents> {
   }
   
   stop = () => {
+
+  }
+
+  getState = (): {[key: string]: any} => {
+    return {}
+  }
+
+  setState = (data: {[key: string]: any}) => {
 
   }
 

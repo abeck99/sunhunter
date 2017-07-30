@@ -35,9 +35,12 @@ export interface IComponentClass<TComponentState, TComponents, InstanceType exte
 
 
 // World definitions
+export type UuidToComponentFunction<TComponent> = (uuid: string) => TComponent
+
 export interface IWorld<TComponents> {
   container: Container
-  getView: () => HTMLElement
+
+  tick: TickFunction
   
   spawn: <TComponentsState>(cls: IActorClass<TComponentsState, TComponents, IActor<TComponents>>, state: TComponentsState) => IActor<TComponents>
   removeActorFromWorld: (actor: IActor<TComponents>) => void
@@ -47,6 +50,10 @@ export interface IWorld<TComponents> {
   deserialize: <TComponentsState>(serializedState: string, isCopy: boolean, cls: IActorClass<TComponentsState, TComponents, IActor<TComponents>>) => void
 
   getActor: (uuid: string) => IActor<TComponents>
+
+  lens: <TComponentState, TComponent extends IComponent<TComponentState, TComponents>>(
+         lensFunc: (actor: IActor<TComponents>) => TComponent
+        ) => UuidToComponentFunction<TComponent>
 }
 
 

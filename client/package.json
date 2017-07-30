@@ -11,6 +11,7 @@
   "dependencies": {
     "bluebird": "^3.5.0",
     "brfs": "^1.4.3",
+    "jquery": "^3.2.1",
     "pixi.js": "^4.5.4",
     "ramda": "^0.24.1",
     "react": "^15.6.1",
@@ -19,8 +20,10 @@
   },
   "devDependencies": {
     "@types/core-js": "^0.9.42",
+    "@types/node": "^8.0.17",
     "@types/pixi.js": "^4.5.2",
     "@types/react": "^15.6.0",
+    "@types/webpack-env": "^1.13.0",
     "awesome-typescript-loader": "^3.2.2",
     "file-watcher-webpack-plugin": "^1.1.0",
     "nunjucks": "^3.0.1",
@@ -28,6 +31,8 @@
     "transform-loader": "^0.2.4",
     "typescript": "^2.4.2",
     "watch-ignore-webpack-plugin": "^1.0.0",
-    "webpack": "^3.4.1"
+    "webpack": "^3.4.1",
+    "webpack-dev-server": "^2.6.1",
+    "webpack-hot-middleware": "^2.18.2"
   }
 }

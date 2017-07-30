@@ -160,7 +160,6 @@ export class ActorFactory<TComponents> implements IActorFactory<TComponents> {
 
       // When promise completes, all assets are loaded
       promise.then(() => {
-        console.log('LOADED FINISHED!')
         newComponent.setLoaded(true)
       })
     }, actorState)
