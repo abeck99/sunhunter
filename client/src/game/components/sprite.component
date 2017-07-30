@@ -5,6 +5,7 @@ export interface ISpriteConfig {
 }
 
 export class SpriteComponent extends Component<ISpriteConfig, IComponents> {
+  sprite?: PIXI.Sprite
 
   static assetsToLoad = (config: ISpriteConfig): IAsset[] => {
     return [
@@ -12,17 +13,26 @@ export class SpriteComponent extends Component<ISpriteConfig, IComponents> {
     ]
   }
 
+  hasWorldAndConfig = () => {
+    this.hasWorldAndConfig_()
+    this.sprite = new PIXI.Sprite(this.world.getTexture(this.config.asset))
+    this.world.container.addChild(this.sprite)
+  }
+
+  init = (config: ISpriteConfig) => {
+    this.init_(config)
+  }
+
   addToWorld = (world: IWorld<IComponents>) => {
-    console.log('ere i am')
-    console.log('hi')
+    this.addToWorld_(world)
   }
 
   removeFromWorld = (world: IWorld<IComponents>) => {
-    
+    this.removeFromWorld_(world)
   }
 
   tick = (timeElapsed: number) => {
-
+    this.tick_(timeElapsed)
   }
 }
 

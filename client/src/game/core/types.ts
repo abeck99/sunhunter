@@ -1,4 +1,4 @@
-import { Container } from "pixi.js"
+import { Container, Texture } from "pixi.js"
 import * as Promise from 'bluebird'
 
 export interface IAsset {
@@ -38,6 +38,7 @@ export interface IWorld<TComponents> {
   container: Container
   getView: () => HTMLElement
   spawn: <TConfig, T extends IActor<TComponents>>(cls: IActorClass<TConfig, TComponents, T>, config: TConfig) => ISpawnInfo<T>
+  getTexture: (asset: IAsset) => Texture
 }
 
 

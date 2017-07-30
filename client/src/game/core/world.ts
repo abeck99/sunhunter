@@ -2,7 +2,7 @@ import * as PIXI from "pixi.js"
 import * as id from 'shortid'
 import * as Promise from 'bluebird'
 import * as R from 'ramda'
-import { IActorClass, IActor, IWorld, IComponent, IActorFactory, TickFunction, ISpawnInfo } from './types'
+import { IActorClass, IActor, IWorld, IComponent, IActorFactory, TickFunction, ISpawnInfo, IAsset } from './types'
 
 export interface IWorldConfig {
   updateTick: TickFunction
@@ -69,5 +69,9 @@ export class World<TComponents> implements IWorld<TComponents> {
         this.addActorToWorld(actor)
       })
     return { uuid, promise }
+  }
+
+  getTexture = (asset: IAsset): PIXI.Texture => {
+    return PIXI.loader.resources[asset.url].texture
   }
 }

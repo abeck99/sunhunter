@@ -74,12 +74,18 @@ export class ActorFactory<TComponents> implements IActorFactory<TComponents> {
       return this.loadStates[assetKey] == LoadState.Loaded
     })
 
+    console.log(`Finsihed loading ${assetKeys}`)
+
     // Dispatch promises
     var newLoadPromises: ILoadPromise[] = []
     for (const loadPromise of this.loadPromises) {
       if (hasLoadedAllAssetKeys(loadPromise.assetKeys)) {
+
+        console.log('found someone waiting...')
         loadPromise.promise.resolve(true)
       } else {
+
+        console.log('hmm this guys still watiing on something')
         newLoadPromises.push(loadPromise)
       }
     }
@@ -117,7 +123,7 @@ export class ActorFactory<TComponents> implements IActorFactory<TComponents> {
       })
 
       var assetKeysToLoad: string[] = []
-      for (const assetKey in assetKeys) {
+      for (const assetKey of assetKeys) {
         if (this.loadStates[assetKey] == undefined) {
           assetKeysToLoad.push(assetKey)
         }
@@ -128,6 +134,13 @@ export class ActorFactory<TComponents> implements IActorFactory<TComponents> {
           assetKeysToLoad, assetsByKey
         )
         const assetsToLoad = R.values(assetsToLoadByKey)
+
+        console.log(`loading assets .. ${assetsToLoad.length} --- ${assetsToLoad}`)
+
+        for (const assetKey of assetsToLoad) {
+          console.log(`key: ${assetKey}`)
+        }
+
         loader.add(assetsToLoad).load(() => {
           this.finishLoad(assetKeysToLoad)
         })

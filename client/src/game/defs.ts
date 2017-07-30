@@ -1,17 +1,60 @@
 import { IComponentClass, IAsset } from './core/types'
+import * as PIXI from "pixi.js"
+
 
 export class Component<TComponentConfig, TComponents> implements IComponent<TComponentConfig, TComponents> {
   actor: IActor<TComponents>
+  world?: IWorld<TComponents>
+  config?: TComponentConfig
+  didCallHasWorldAndConfig: boolean
 
   constructor(actor: IActor<TComponents>, config: TComponentConfig) {
     this.actor = actor
+    this.didCallHasWorldAndConfig = false
     this.init(config)
   }
 
-  init = (config: TComponentConfig) => {}
-  addToWorld = (world: IWorld<TComponents>) => {}
-  removeFromWorld = (world: IWorld<TComponents>) => {}
-  tick = (elapsedTime: number) => {}
+  hasWorldAndConfig_ = () => {
+
+  }
+  hasWorldAndConfig = () => {
+    this.hasWorldAndConfig_()
+  }
+
+  checkIfHasWorldAndConfig = () => {
+    if (!this.didCallHasWorldAndConfig && this.world && this.config) {
+      this.didCallHasWorldAndConfig = true
+      this.hasWorldAndConfig()
+    }
+  }
+
+  init_ = (config: TComponentConfig) => {
+    this.config = config
+    this.checkIfHasWorldAndConfig()
+  }
+  init = (config: TComponentConfig) => {
+    this.init_(config)
+  }
+
+  addToWorld_ = (world: IWorld<TComponents>) => {
+    this.world = world
+    this.checkIfHasWorldAndConfig()
+  }
+  addToWorld = (world: IWorld<TComponents>) => {
+    this.addToWorld_(world)
+  }
+
+  removeFromWorld_ = (world: IWorld<TComponents>) => {
+    this.world = null
+  }
+  removeFromWorld = (world: IWorld<TComponents>) => {
+    this.removeFromWorld_(world)
+  }
+
+  tick_ = (elapsedTime: number) => {}
+  tick = (elapsedTime: number) => {
+    this.tick_(elapsedTime)
+  }
 }
 
 
@@ -22,6 +65,7 @@ export interface ISpriteConfig {
 }
 
 export class SpriteComponent extends Component<ISpriteConfig, IComponents> {
+  sprite?: PIXI.Sprite
 
   static assetsToLoad = (config: ISpriteConfig): IAsset[] => {
     return [
@@ -29,17 +73,26 @@ export class SpriteComponent extends Component<ISpriteConfig, IComponents> {
     ]
   }
 
+  hasWorldAndConfig = () => {
+    this.hasWorldAndConfig_()
+    this.sprite = new PIXI.Sprite(this.world.getTexture(this.config.asset))
+    this.world.container.addChild(this.sprite)
+  }
+
+  init = (config: ISpriteConfig) => {
+    this.init_(config)
+  }
+
   addToWorld = (world: IWorld<IComponents>) => {
-    console.log('ere i am')
-    console.log('hi')
+    this.addToWorld_(world)
   }
 
   removeFromWorld = (world: IWorld<IComponents>) => {
-    
+    this.removeFromWorld_(world)
   }
 
   tick = (timeElapsed: number) => {
-
+    this.tick_(timeElapsed)
   }
 }
 
