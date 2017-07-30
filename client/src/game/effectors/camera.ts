@@ -3,7 +3,7 @@ import { IComponents, positionLens } from '../defs'
 import { CAMERA } from '../util'
 import { CameraActor } from '../actors/Camera'
 
-export class CameraEffector<TPhysics> extends GameEffector<TPhysics, IComponents> {
+export class CameraEffector<TPhysics> extends GameEffector<{}, TPhysics, IComponents> {
   start = (shouldLoadContent: boolean) => {
     if (shouldLoadContent) {
       this.world.spawnWithId(CAMERA, CameraActor, {})

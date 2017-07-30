@@ -3,7 +3,7 @@ import { Keys } from '../core/interactions'
 import { PlayerActor } from '../actors/Player'
 import { IComponents, velocityLens } from '../defs'
 
-export class TestEffector<TPhysics> extends GameEffector<TPhysics, IComponents> {
+export class TestEffector<TPhysics> extends GameEffector<{}, TPhysics, IComponents> {
   playerId?: string
 
   start = (shouldLoadContent: boolean) => {

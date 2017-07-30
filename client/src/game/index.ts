@@ -24,7 +24,7 @@ export class Game {
 
   private world: IWorld<Physics, IComponents>
 
-  private effectors: GameEffector<Physics, IComponents>[]
+  private effectors: GameEffector<any, Physics, IComponents>[]
 
   reloadWatcher: KeyboardWatcher
   meter: any
@@ -42,8 +42,8 @@ export class Game {
     this.renderer.resize(window.innerWidth-50, window.innerHeight-50);
 
     this.world = makeWorld()
-    this.addEffector(new TestEffector(this.world))
-    this.addEffector(new CameraEffector(this.world))
+    this.addEffector(new TestEffector(this.world, {}))
+    this.addEffector(new CameraEffector(this.world, {}))
 
     this.world.spawnWithId(SCREEN, BlankActor, {
       screen: {
@@ -72,12 +72,12 @@ export class Game {
     this.tick()
   }
 
-  addEffector = (effector: GameEffector<Physics, IComponents>) => {
+  addEffector = (effector: GameEffector<any, Physics, IComponents>) => {
     this.effectors.push(effector)
     effector.start(true)
   }
 
-  removeEffector = (effector: GameEffector<Physics, IComponents>) => {
+  removeEffector = (effector: GameEffector<any, Physics, IComponents>) => {
     this.effectors = R.filter((e) => {
       return e.effectorId != effector.effectorId
     }, this.effectors)
