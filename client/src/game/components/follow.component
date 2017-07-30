@@ -1,0 +1,34 @@
+follow,IFollowState,FollowComponent
+
+export interface IFollowState {
+  t?: string
+}
+
+export class FollowComponent extends Component<IFollowState, Physics, IComponents> {
+  static defaultState = {
+    t: null,
+  }
+
+  getPos?: UuidToComponentFunction<PositionComponent>
+  addToWorldPartTwo = () => {
+    this.getPos = positionLens(this.world)
+  }
+  removeFromWorldPartTwo = () => {
+    this.getPos = null
+  }
+
+  tick = (timeElapsed: number) => {
+    const myPos = this.actor.components.position
+    if (!myPos || !this.getPos) {
+      return
+    }
+
+    const targetPos = this.getPos(this.state.t)
+    if (!targetPos) {
+      return
+    }
+
+    myPos.state.x = targetPos.state.x
+    myPos.state.y = targetPos.state.y
+  }
+}

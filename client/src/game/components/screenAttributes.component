@@ -1,0 +1,25 @@
+screen,IScreenAttributesState,ScreenAttributesComponent
+
+export interface IScreenAttributesState {
+  w?: number
+  h?: number
+}
+
+export class ScreenAttributesComponent extends Component<IScreenAttributesState, Physics, IComponents> {
+  static defaultState = {
+    w: 0,
+    h: 0,
+  }
+
+  tick = (timeElapsed: number) => {
+
+  }
+
+  pixelsFromWorld = (coords: IVector2d): IVector2d => {
+    // For now 1:1 ratio between world space and pixel space
+    return {
+      x: coords.x + (this.state.w*0.5),
+      y: (-1*coords.y) + (this.state.h*0.5),
+    }
+  }
+}

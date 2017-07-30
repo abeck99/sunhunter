@@ -3,6 +3,8 @@ import * as PIXI from "pixi.js"
 import * as R from 'ramda'
 import { UuidToComponentFunction } from './core/types'
 import { Physics } from './physics'
+import { IVector2d } from './util/math'
+import { CAMERA, SCREEN } from './util'
 
 
 export class Component<TComponentState, TPhysics, TComponents> implements IComponent<TComponentState, TPhysics, TComponents> {

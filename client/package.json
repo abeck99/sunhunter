@@ -11,6 +11,7 @@
   "dependencies": {
     "bluebird": "^3.5.0",
     "brfs": "^1.4.3",
+    "fpsmeter": "^0.3.1",
     "jquery": "^3.2.1",
     "pixi.js": "^4.5.4",
     "ramda": "^0.24.1",

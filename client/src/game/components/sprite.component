@@ -19,16 +19,38 @@ export class SpriteComponent extends Component<ISpriteState, Physics, IComponent
     ]
   }
 
+  getPos?: UuidToComponentFunction<PositionComponent>
+  getScreen?: UuidToComponentFunction<ScreenAttributesComponent>
   addToWorldPartTwo = () => {
     this.sprite = new PIXI.Sprite(this.world.getTexture(this.state.asset))
     this.world.container.addChild(this.sprite)
+    this.getPos = positionLens(this.world)
+    this.getScreen = screenLens(this.world)
+  }
+
+  removeFromWorldPartTwo = () => {
+    this.getPos = null
+    this.getScreen = null
   }
 
   tick = (timeElapsed: number) => {
     const pos = this.actor.components.position
-    if (this.sprite && pos) {
-      this.sprite.x = pos.state.x
-      this.sprite.y = pos.state.y
+    if (!this.sprite || !pos || !this.getPos || !this.getScreen) {
+      return
     }
+
+    const cameraPos = this.getPos(CAMERA)
+    const screen = this.getScreen(SCREEN)
+    if (!cameraPos || !screen) {
+      return
+    }
+
+    const { x, y } = screen.pixelsFromWorld({
+      x: pos.state.x - cameraPos.state.x,
+      y: pos.state.y - cameraPos.state.y,
+    })
+
+    this.sprite.x = x 
+    this.sprite.y = y
   }
 }

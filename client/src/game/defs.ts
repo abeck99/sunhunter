@@ -3,6 +3,8 @@ import * as PIXI from "pixi.js"
 import * as R from 'ramda'
 import { UuidToComponentFunction } from './core/types'
 import { Physics } from './physics'
+import { IVector2d } from './util/math'
+import { CAMERA, SCREEN } from './util'
 
 
 export class Component<TComponentState, TPhysics, TComponents> implements IComponent<TComponentState, TPhysics, TComponents> {
@@ -124,6 +126,51 @@ export const dragLens = (world: IWorld<any, IComponents>): UuidToComponentFuncti
 
 
 
+export interface IFollowState {
+  t?: string
+}
+
+export class FollowComponent extends Component<IFollowState, Physics, IComponents> {
+  static defaultState = {
+    t: null,
+  }
+
+  getPos?: UuidToComponentFunction<PositionComponent>
+  addToWorldPartTwo = () => {
+    this.getPos = positionLens(this.world)
+  }
+  removeFromWorldPartTwo = () => {
+    this.getPos = null
+  }
+
+  tick = (timeElapsed: number) => {
+    const myPos = this.actor.components.position
+    if (!myPos || !this.getPos) {
+      return
+    }
+
+    const targetPos = this.getPos(this.state.t)
+    if (!targetPos) {
+      return
+    }
+
+    myPos.state.x = targetPos.state.x
+    myPos.state.y = targetPos.state.y
+  }
+}
+
+{
+ const _: IComponentClass<IFollowState, Physics, IComponents, FollowComponent> = FollowComponent
+}
+
+export const followLens = (world: IWorld<any, IComponents>): UuidToComponentFunction<FollowComponent> => {
+  return world.lens((actor: IActor<IComponents>) => {
+    return actor.components.follow
+  })
+}
+
+
+
 export interface INetState {
   x: boolean
 }
@@ -177,6 +224,42 @@ export const positionLens = (world: IWorld<any, IComponents>): UuidToComponentFu
 
 
 
+export interface IScreenAttributesState {
+  w?: number
+  h?: number
+}
+
+export class ScreenAttributesComponent extends Component<IScreenAttributesState, Physics, IComponents> {
+  static defaultState = {
+    w: 0,
+    h: 0,
+  }
+
+  tick = (timeElapsed: number) => {
+
+  }
+
+  pixelsFromWorld = (coords: IVector2d): IVector2d => {
+    // For now 1:1 ratio between world space and pixel space
+    return {
+      x: coords.x + (this.state.w*0.5),
+      y: (-1*coords.y) + (this.state.h*0.5),
+    }
+  }
+}
+
+{
+ const _: IComponentClass<IScreenAttributesState, Physics, IComponents, ScreenAttributesComponent> = ScreenAttributesComponent
+}
+
+export const screenLens = (world: IWorld<any, IComponents>): UuidToComponentFunction<ScreenAttributesComponent> => {
+  return world.lens((actor: IActor<IComponents>) => {
+    return actor.components.screen
+  })
+}
+
+
+
 export interface ISpriteState {
   asset: IAsset
 }
@@ -196,17 +279,39 @@ export class SpriteComponent extends Component<ISpriteState, Physics, IComponent
     ]
   }
 
+  getPos?: UuidToComponentFunction<PositionComponent>
+  getScreen?: UuidToComponentFunction<ScreenAttributesComponent>
   addToWorldPartTwo = () => {
     this.sprite = new PIXI.Sprite(this.world.getTexture(this.state.asset))
     this.world.container.addChild(this.sprite)
+    this.getPos = positionLens(this.world)
+    this.getScreen = screenLens(this.world)
+  }
+
+  removeFromWorldPartTwo = () => {
+    this.getPos = null
+    this.getScreen = null
   }
 
   tick = (timeElapsed: number) => {
     const pos = this.actor.components.position
-    if (this.sprite && pos) {
-      this.sprite.x = pos.state.x
-      this.sprite.y = pos.state.y
+    if (!this.sprite || !pos || !this.getPos || !this.getScreen) {
+      return
     }
+
+    const cameraPos = this.getPos(CAMERA)
+    const screen = this.getScreen(SCREEN)
+    if (!cameraPos || !screen) {
+      return
+    }
+
+    const { x, y } = screen.pixelsFromWorld({
+      x: pos.state.x - cameraPos.state.x,
+      y: pos.state.y - cameraPos.state.y,
+    })
+
+    this.sprite.x = x 
+    this.sprite.y = y
   }
 }
 
@@ -265,9 +370,13 @@ boxCollider?: IBoxColliderState
 
 drag?: IDragState
 
+follow?: IFollowState
+
 net?: INetState
 
 position?: IPositionState
+
+screen?: IScreenAttributesState
 
 sprite?: ISpriteState
 
@@ -281,9 +390,13 @@ boxCollider?: BoxColliderComponent
 
 drag?: DragComponent
 
+follow?: FollowComponent
+
 net?: NetworkedComponent
 
 position?: PositionComponent
+
+screen?: ScreenAttributesComponent
 
 sprite?: SpriteComponent
 
@@ -297,9 +410,13 @@ boxCollider: BoxColliderComponent,
 
 drag: DragComponent,
 
+follow: FollowComponent,
+
 net: NetworkedComponent,
 
 position: PositionComponent,
+
+screen: ScreenAttributesComponent,
 
 sprite: SpriteComponent,
 

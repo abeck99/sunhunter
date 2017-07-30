@@ -1,16 +1,21 @@
 import * as PIXI from "pixi.js"
 import * as jquery from 'jquery'
 import * as R from 'ramda'
+import 'fpsmeter'
 import { IWorld } from './core/types'
 import { IComponents, makeWorld } from './defs'
 import { insideBackground } from './util/colors'
-import { GameEffector } from './core/effectors'
-import { TestEffector } from './effectors/test'
 import { Keys, KeyboardWatcher } from './core/interactions'
-import { NetworkedActor } from './actors/Networked'
+import { BlankActor } from './actors/Blank'
 import { Physics } from './physics'
+import { SCREEN } from './util'
+import { GameEffector } from './core/effectors'
 
-export var server = 'http://localhost:1337/scripts/'
+
+
+import { TestEffector } from './effectors/test'
+import { CameraEffector } from './effectors/camera'
+import { GenerativeWorldEffector } from './effectors/generativeWorld'
 
 
 export class Game {
@@ -22,8 +27,11 @@ export class Game {
   private effectors: GameEffector<Physics, IComponents>[]
 
   reloadWatcher: KeyboardWatcher
+  meter: any
 
   constructor() {
+    this.meter = new (window as any).FPSMeter()
+    this.effectors = []
     this.renderer = PIXI.autoDetectRenderer(1366, 768, {
       backgroundColor: insideBackground.medium,
     });
@@ -35,6 +43,14 @@ export class Game {
 
     this.world = makeWorld()
     this.addEffector(new TestEffector(this.world))
+    this.addEffector(new CameraEffector(this.world))
+
+    this.world.spawnWithId(SCREEN, BlankActor, {
+      screen: {
+        w: this.renderer.width,
+        h: this.renderer.height,
+      }
+    })
 
     //if (module.hot) {
     //  console.log('hot reloading is enabled+!')
@@ -43,7 +59,7 @@ export class Game {
     //      const savedWorld = this.world.serialize()
     //      const modeState = this.mode.getState()
     //      this.world = require(`${server}app`).makeWorld()
-    //      this.world.deserialize(savedWorld, false, NetworkedActor)
+    //      this.world.deserialize(savedWorld, false, BlankActor)
     //      this.mode.cleanup()
     //      this.mode = new TestMode(this.world)
     //      this.mode.setState(modeState)
@@ -78,6 +94,7 @@ export class Game {
   }
 
   tick = () => {
+    this.meter.tickStart()
     const fakeTimeElaspsed = 0.1
     for (const effector of this.effectors) {
       effector.tick(fakeTimeElaspsed)
@@ -85,5 +102,6 @@ export class Game {
     this.world.tick(fakeTimeElaspsed)
     this.renderer.render(this.world.container)
     this.frame = requestAnimationFrame(this.tick)
+    this.meter.tick()
   }
 }

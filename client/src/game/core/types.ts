@@ -44,6 +44,7 @@ export interface IWorld<TPhysics, TComponents> {
   tick: TickFunction
   
   spawn: <TComponentsState>(cls: IActorClass<TComponentsState, TComponents, IActor<TComponents>>, state: TComponentsState) => IActor<TComponents>
+  spawnWithId: <TComponentsState>(uuid: string, cls: IActorClass<TComponentsState, TComponents, IActor<TComponents>>, state: TComponentsState) => IActor<TComponents>
   removeActorFromWorld: (actor: IActor<TComponents>) => void
 
   getTexture: (asset: IAsset) => Texture
