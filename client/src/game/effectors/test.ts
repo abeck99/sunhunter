@@ -1,19 +1,18 @@
-import { GameMode } from '../core/modes'
+import { GameEffector } from '../core/effectors'
 import { Keys } from '../core/interactions'
 import { PlayerActor } from '../actors/Player'
 import { IComponents, velocityLens } from '../defs'
 
-export class TestMode extends GameMode<IComponents> {
+export class TestEffector<TPhysics> extends GameEffector<TPhysics, IComponents> {
   playerId?: string
 
   start = (shouldLoadContent: boolean) => {
     if (shouldLoadContent) {
-      this.playerId = this.world.spawn(PlayerActor, {drag: {x:10, y:10}}).uuid
+      this.playerId = this.world.spawn(PlayerActor, {drag: {a:10}}).uuid
     }
 
     const velocity = velocityLens(this.world)
     this.watchKey(Keys.W, {pressed: () => {
-      console.log('b')
       velocity(this.playerId).applyForce(0,-30)
     }})
 

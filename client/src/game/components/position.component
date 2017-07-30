@@ -5,12 +5,16 @@ export interface IPositionState {
   y?: number
 }
 
-export class PositionComponent extends Component<IPositionState, IComponents> {
+export class PositionComponent extends Component<IPositionState, Physics, IComponents> {
   static defaultState = {
     x: 0,
     y: 0,
   }
 
   tick = (timeElapsed: number) => {
+  }
+
+  updatePosition = (newX: number, newY: number) => {
+    
   }
 }

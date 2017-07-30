@@ -1,12 +1,15 @@
 import { IWorld } from './types'
 import { KeyboardWatcher, IKeyboardCallbacks } from './interactions'
+import * as id from 'shortid'
 
-export class GameMode<TComponents> {
-  world: IWorld<TComponents>
+export class GameEffector<TPhysics, TComponents> {
+  world: IWorld<TPhysics, TComponents>
+  effectorId: string
 
   keyboardWatchers: KeyboardWatcher[]
 
-  constructor(world: IWorld<TComponents>) {
+  constructor(world: IWorld<TPhysics, TComponents>) {
+    this.effectorId = id.generate()
     this.world = world
     this.keyboardWatchers = []
   }

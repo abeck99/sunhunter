@@ -49,7 +49,7 @@ function defer() {
 }
 
 interface IComponentClassCollection<TComponents> {
-  [key: string]: IComponentClass<any, TComponents, any>
+  [key: string]: IComponentClass<any, any, TComponents, any>
 }
 
 export class ActorFactory<TComponents> implements IActorFactory<TComponents> {

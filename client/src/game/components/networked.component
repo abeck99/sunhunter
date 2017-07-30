@@ -4,7 +4,7 @@ export interface INetState {
   x: boolean
 }
 
-export class NetworkedComponent extends Component<INetState, IComponents> {
+export class NetworkedComponent extends Component<INetState, Physics, IComponents> {
   static defaultState = {
     x: true,
   }

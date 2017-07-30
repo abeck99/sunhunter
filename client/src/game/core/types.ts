@@ -11,21 +11,21 @@ export type TickFunction = (timeElapsed: number) => void
 
 
 // Component definitions
-export interface IComponent<TComponentState, TComponents> {
+export interface IComponent<TComponentState, TPhysics, TComponents> {
   actor: IActor<TComponents>
   tick: TickFunction
 
   addToWorldPartTwo: () => void
   removeFromWorldPartTwo: () => void
 
-  setWorld: (world: IWorld<TComponents>) => void
+  setWorld: (world: IWorld<TPhysics, TComponents>) => void
   setLoaded: (isLoaded: boolean) => void
 
   getState: () => TComponentState
 }
 
-export interface IComponentClass<TComponentState, TComponents, InstanceType extends IComponent<TComponentState, TComponents>> {
-  new(actor: IActor<TComponents>, state: TComponentState): IComponent<TComponentState, TComponents>
+export interface IComponentClass<TComponentState, TPhysics, TComponents, InstanceType extends IComponent<TComponentState, TPhysics, TComponents>> {
+  new(actor: IActor<TComponents>, state: TComponentState): IComponent<TComponentState, TPhysics, TComponents>
   assetsToLoad?: (state: TComponentState) => IAsset[]
   defaultState: TComponentState
 }
@@ -37,8 +37,9 @@ export interface IComponentClass<TComponentState, TComponents, InstanceType exte
 // World definitions
 export type UuidToComponentFunction<TComponent> = (uuid: string) => TComponent
 
-export interface IWorld<TComponents> {
+export interface IWorld<TPhysics, TComponents> {
   container: Container
+  physics: TPhysics
 
   tick: TickFunction
   
@@ -51,7 +52,7 @@ export interface IWorld<TComponents> {
 
   getActor: (uuid: string) => IActor<TComponents>
 
-  lens: <TComponentState, TComponent extends IComponent<TComponentState, TComponents>>(
+  lens: <TComponentState, TPhysics, TComponent extends IComponent<TComponentState, TPhysics, TComponents>>(
          lensFunc: (actor: IActor<TComponents>) => TComponent
         ) => UuidToComponentFunction<TComponent>
 }

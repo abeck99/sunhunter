@@ -1,20 +1,28 @@
 drag,IDragState,DragComponent
 
 export interface IDragState {
-  x?: number
-  y?: number
+  a?: number
 }
 
-export class DragComponent extends Component<IDragState, IComponents> {
+export class DragComponent extends Component<IDragState, Physics, IComponents> {
   static defaultState = {
-    x: 0,
-    y: 0,
+    a: 0,
   }
 
   tick = (timeElapsed: number) => {
-    if (this.actor.components.velocity) {
-      this.actor.components.velocity.state.x = Math.max(0, this.actor.components.velocity.state.x - (this.state.x*timeElapsed))
-      this.actor.components.velocity.state.y = Math.max(0, this.actor.components.velocity.state.y - (this.state.y*timeElapsed))
+    const v_ = this.actor.components.velocity
+    if (v_) {
+      const v = v_.state
+      const velocityMagnitude = Math.sqrt(v.x*v.x + v.y*v.y)
+      const newMag = velocityMagnitude - (this.state.a*timeElapsed)
+
+      if (velocityMagnitude > 0.01) {
+        v.x = (v.x/velocityMagnitude)*newMag
+        v.y = (v.y/velocityMagnitude)*newMag
+      } else {
+        v.x = 0
+        v.y = 0
+      }
     }
   }
 }

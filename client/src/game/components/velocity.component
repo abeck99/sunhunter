@@ -5,7 +5,7 @@ export interface IVelocityState {
   y?: number
 }
 
-export class VelocityComponent extends Component<IVelocityState, IComponents> {
+export class VelocityComponent extends Component<IVelocityState, Physics, IComponents> {
   static defaultState = {
     x: 0,
     y: 0,

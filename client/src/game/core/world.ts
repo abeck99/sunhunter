@@ -5,8 +5,9 @@ import * as R from 'ramda'
 import { IActorClass, IActor, IActorState, IWorld, IComponent, IActorFactory, TickFunction, IAsset, UuidToComponentFunction } from './types'
 import { Actor } from '../defs'
 
-export class World<TComponents> implements IWorld<TComponents> {
+export class World<TPhysics, TComponents> implements IWorld<TPhysics, TComponents> {
   container: PIXI.Container
+  physics: TPhysics
 
   private actors: {
     [key: string]: IActor<TComponents>
@@ -14,7 +15,8 @@ export class World<TComponents> implements IWorld<TComponents> {
 
   private factory: IActorFactory<TComponents>
 
-  constructor(factory: IActorFactory<TComponents>) {
+  constructor(physics: TPhysics, factory: IActorFactory<TComponents>) {
+    this.physics = physics
     this.container = new PIXI.Container()
     this.actors = {}
     this.factory = factory
@@ -65,7 +67,7 @@ export class World<TComponents> implements IWorld<TComponents> {
     return this.actors[uuid]
   }
 
-  lens = <TComponentState, TComponent extends IComponent<TComponentState, TComponents>>(
+  lens = <TComponentState, TPhysics, TComponent extends IComponent<TComponentState, TPhysics, TComponents>>(
          lensFunc: (actor: IActor<TComponents>) => TComponent
         ): UuidToComponentFunction<TComponent> => {
     return (uuid: string): TComponent => {

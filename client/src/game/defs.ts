@@ -2,11 +2,12 @@ import { IComponentClass, IAsset } from './core/types'
 import * as PIXI from "pixi.js"
 import * as R from 'ramda'
 import { UuidToComponentFunction } from './core/types'
+import { Physics } from './physics'
 
 
-export class Component<TComponentState, TComponents> implements IComponent<TComponentState, TComponents> {
+export class Component<TComponentState, TPhysics, TComponents> implements IComponent<TComponentState, TPhysics, TComponents> {
   actor: IActor<TComponents>
-  world?: IWorld<TComponents>
+  world?: IWorld<TPhysics, TComponents>
   state: TComponentState
 
   constructor(actor: IActor<TComponents>, state: TComponentState) {
@@ -37,7 +38,7 @@ export class Component<TComponentState, TComponents> implements IComponent<TComp
   }
   removeFromWorldPartTwo = () => {}
 
-  setWorld = (world: IWorld<TComponents>) => {
+  setWorld = (world: IWorld<TPhysics, TComponents>) => {
     this.world = world
     this.dispatchAddRemoveIfNeeded()
   }
@@ -57,30 +58,65 @@ export class Component<TComponentState, TComponents> implements IComponent<TComp
 
 
 
-export interface IDragState {
+export interface IBoxColliderState {
   x?: number
   y?: number
 }
 
-export class DragComponent extends Component<IDragState, IComponents> {
+export class BoxColliderComponent extends Component<IBoxColliderState, Physics, IComponents> {
   static defaultState = {
-    x: 0,
-    y: 0,
+    x: 1,
+    y: 1,
   }
 
   tick = (timeElapsed: number) => {
-    if (this.actor.components.velocity) {
-      this.actor.components.velocity.state.x = Math.max(0, this.actor.components.velocity.state.x - (this.state.x*timeElapsed))
-      this.actor.components.velocity.state.y = Math.max(0, this.actor.components.velocity.state.y - (this.state.y*timeElapsed))
+  }
+}
+
+{
+ const _: IComponentClass<IBoxColliderState, Physics, IComponents, BoxColliderComponent> = BoxColliderComponent
+}
+
+export const boxColliderLens = (world: IWorld<any, IComponents>): UuidToComponentFunction<BoxColliderComponent> => {
+  return world.lens((actor: IActor<IComponents>) => {
+    return actor.components.boxCollider
+  })
+}
+
+
+
+export interface IDragState {
+  a?: number
+}
+
+export class DragComponent extends Component<IDragState, Physics, IComponents> {
+  static defaultState = {
+    a: 0,
+  }
+
+  tick = (timeElapsed: number) => {
+    const v_ = this.actor.components.velocity
+    if (v_) {
+      const v = v_.state
+      const velocityMagnitude = Math.sqrt(v.x*v.x + v.y*v.y)
+      const newMag = velocityMagnitude - (this.state.a*timeElapsed)
+
+      if (velocityMagnitude > 0.01) {
+        v.x = (v.x/velocityMagnitude)*newMag
+        v.y = (v.y/velocityMagnitude)*newMag
+      } else {
+        v.x = 0
+        v.y = 0
+      }
     }
   }
 }
 
 {
- const _: IComponentClass<IDragState, IComponents, DragComponent> = DragComponent
+ const _: IComponentClass<IDragState, Physics, IComponents, DragComponent> = DragComponent
 }
 
-export const dragLens = (world: IWorld<IComponents>): UuidToComponentFunction<DragComponent> => {
+export const dragLens = (world: IWorld<any, IComponents>): UuidToComponentFunction<DragComponent> => {
   return world.lens((actor: IActor<IComponents>) => {
     return actor.components.drag
   })
@@ -92,17 +128,17 @@ export interface INetState {
   x: boolean
 }
 
-export class NetworkedComponent extends Component<INetState, IComponents> {
+export class NetworkedComponent extends Component<INetState, Physics, IComponents> {
   static defaultState = {
     x: true,
   }
 }
 
 {
- const _: IComponentClass<INetState, IComponents, NetworkedComponent> = NetworkedComponent
+ const _: IComponentClass<INetState, Physics, IComponents, NetworkedComponent> = NetworkedComponent
 }
 
-export const netLens = (world: IWorld<IComponents>): UuidToComponentFunction<NetworkedComponent> => {
+export const netLens = (world: IWorld<any, IComponents>): UuidToComponentFunction<NetworkedComponent> => {
   return world.lens((actor: IActor<IComponents>) => {
     return actor.components.net
   })
@@ -115,7 +151,7 @@ export interface IPositionState {
   y?: number
 }
 
-export class PositionComponent extends Component<IPositionState, IComponents> {
+export class PositionComponent extends Component<IPositionState, Physics, IComponents> {
   static defaultState = {
     x: 0,
     y: 0,
@@ -123,13 +159,17 @@ export class PositionComponent extends Component<IPositionState, IComponents> {
 
   tick = (timeElapsed: number) => {
   }
+
+  updatePosition = (newX: number, newY: number) => {
+    
+  }
 }
 
 {
- const _: IComponentClass<IPositionState, IComponents, PositionComponent> = PositionComponent
+ const _: IComponentClass<IPositionState, Physics, IComponents, PositionComponent> = PositionComponent
 }
 
-export const positionLens = (world: IWorld<IComponents>): UuidToComponentFunction<PositionComponent> => {
+export const positionLens = (world: IWorld<any, IComponents>): UuidToComponentFunction<PositionComponent> => {
   return world.lens((actor: IActor<IComponents>) => {
     return actor.components.position
   })
@@ -141,7 +181,7 @@ export interface ISpriteState {
   asset: IAsset
 }
 
-export class SpriteComponent extends Component<ISpriteState, IComponents> {
+export class SpriteComponent extends Component<ISpriteState, Physics, IComponents> {
   static defaultState = {
     asset: {
       url: 'none'
@@ -162,18 +202,19 @@ export class SpriteComponent extends Component<ISpriteState, IComponents> {
   }
 
   tick = (timeElapsed: number) => {
-    if (this.sprite && this.actor.components.position) {
-      this.sprite.x = this.actor.components.position.state.x
-      this.sprite.y = this.actor.components.position.state.y
+    const pos = this.actor.components.position
+    if (this.sprite && pos) {
+      this.sprite.x = pos.state.x
+      this.sprite.y = pos.state.y
     }
   }
 }
 
 {
- const _: IComponentClass<ISpriteState, IComponents, SpriteComponent> = SpriteComponent
+ const _: IComponentClass<ISpriteState, Physics, IComponents, SpriteComponent> = SpriteComponent
 }
 
-export const spriteLens = (world: IWorld<IComponents>): UuidToComponentFunction<SpriteComponent> => {
+export const spriteLens = (world: IWorld<any, IComponents>): UuidToComponentFunction<SpriteComponent> => {
   return world.lens((actor: IActor<IComponents>) => {
     return actor.components.sprite
   })
@@ -186,7 +227,7 @@ export interface IVelocityState {
   y?: number
 }
 
-export class VelocityComponent extends Component<IVelocityState, IComponents> {
+export class VelocityComponent extends Component<IVelocityState, Physics, IComponents> {
   static defaultState = {
     x: 0,
     y: 0,
@@ -206,10 +247,10 @@ export class VelocityComponent extends Component<IVelocityState, IComponents> {
 }
 
 {
- const _: IComponentClass<IVelocityState, IComponents, VelocityComponent> = VelocityComponent
+ const _: IComponentClass<IVelocityState, Physics, IComponents, VelocityComponent> = VelocityComponent
 }
 
-export const velocityLens = (world: IWorld<IComponents>): UuidToComponentFunction<VelocityComponent> => {
+export const velocityLens = (world: IWorld<any, IComponents>): UuidToComponentFunction<VelocityComponent> => {
   return world.lens((actor: IActor<IComponents>) => {
     return actor.components.velocity
   })
@@ -219,6 +260,8 @@ export const velocityLens = (world: IWorld<IComponents>): UuidToComponentFunctio
 
 
 export interface IComponentsState {
+
+boxCollider?: IBoxColliderState
 
 drag?: IDragState
 
@@ -234,6 +277,8 @@ velocity?: IVelocityState
 
 export interface IComponents {
 
+boxCollider?: BoxColliderComponent
+
 drag?: DragComponent
 
 net?: NetworkedComponent
@@ -247,6 +292,8 @@ velocity?: VelocityComponent
 }
 
 const componentClasses = {
+
+boxCollider: BoxColliderComponent,
 
 drag: DragComponent,
 
@@ -293,8 +340,8 @@ export class Actor implements IActor<IComponents> {
 }
 
 export const factory = new ActorFactory<IComponents>(componentClasses)
-export const makeWorld = (): World<IComponents> => {
-  return new World<IComponents>(factory)
+export const makeWorld = (): World<Physics, IComponents> => {
+  return new World<Physics, IComponents>(new Physics(), factory)
 }
 
 

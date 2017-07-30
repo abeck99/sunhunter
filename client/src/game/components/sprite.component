@@ -4,7 +4,7 @@ export interface ISpriteState {
   asset: IAsset
 }
 
-export class SpriteComponent extends Component<ISpriteState, IComponents> {
+export class SpriteComponent extends Component<ISpriteState, Physics, IComponents> {
   static defaultState = {
     asset: {
       url: 'none'
@@ -25,9 +25,10 @@ export class SpriteComponent extends Component<ISpriteState, IComponents> {
   }
 
   tick = (timeElapsed: number) => {
-    if (this.sprite && this.actor.components.position) {
-      this.sprite.x = this.actor.components.position.state.x
-      this.sprite.y = this.actor.components.position.state.y
+    const pos = this.actor.components.position
+    if (this.sprite && pos) {
+      this.sprite.x = pos.state.x
+      this.sprite.y = pos.state.y
     }
   }
 }
