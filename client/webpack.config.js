@@ -3,6 +3,9 @@
 const webpack = require('webpack');
 const path = require('path');
 const { CheckerPlugin } = require('awesome-typescript-loader')
+const NunjucksPreprocessPlugin = require('./webpack-plugins/nunjucks-preprocessor');
+const WatchIgnorePlugin = require('watch-ignore-webpack-plugin');
+const FileWatcherPlugin = require("file-watcher-webpack-plugin");
 
 const clientPath = __dirname
 const buildPath = `${clientPath}/www/scripts/`
@@ -28,6 +31,14 @@ module.exports = {
         return module.context && module.context.indexOf('node_modules') !== -1
       },
     }),
+    new NunjucksPreprocessPlugin(),
+    new WatchIgnorePlugin([
+        path.resolve(__dirname, './src/game/defs.ts'),
+    ]),
+    new FileWatcherPlugin({
+        root: path.resolve(__dirname, './src/game/components/'),
+        files: ['*.component']
+    })
     ],
   module: {
     loaders: [

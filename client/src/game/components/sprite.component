@@ -1,11 +1,10 @@
-import { Component, IComponents } from '../defs'
-import { IComponentClass, IAsset, IWorld } from '../core/types'
+sprite,ISpriteConfig,SpriteComponent
 
 export interface ISpriteConfig {
   asset: IAsset
 }
 
-export class SpriteComponent extends Component<ISpriteConfig> {
+export class SpriteComponent extends Component<ISpriteConfig, IComponents> {
 
   static assetsToLoad = (config: ISpriteConfig): IAsset[] => {
     return [
@@ -14,7 +13,8 @@ export class SpriteComponent extends Component<ISpriteConfig> {
   }
 
   addToWorld = (world: IWorld<IComponents>) => {
-    
+    console.log('ere i am')
+    console.log('hi')
   }
 
   removeFromWorld = (world: IWorld<IComponents>) => {

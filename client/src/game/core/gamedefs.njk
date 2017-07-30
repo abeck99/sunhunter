@@ -15,37 +15,9 @@ export class Component<TComponentConfig, TComponents> implements IComponent<TCom
 }
 
 
-
-
-export interface ISpriteConfig {
-  asset: IAsset
-}
-
-export class SpriteComponent extends Component<ISpriteConfig, IComponents> {
-
-  static assetsToLoad = (config: ISpriteConfig): IAsset[] => {
-    return [
-      config.asset
-    ]
-  }
-
-  addToWorld = (world: IWorld<IComponents>) => {
-    console.log('ere i am')
-    console.log('hi')
-  }
-
-  removeFromWorld = (world: IWorld<IComponents>) => {
-    
-  }
-
-  tick = (timeElapsed: number) => {
-
-  }
-}
-
-const _: IComponentClass<ISpriteConfig, IComponents, SpriteComponent> = SpriteComponent
-
-
+{% for component in components %}
+{{ component.body }}
+{% endfor %}
 
 
 
@@ -53,21 +25,21 @@ const _: IComponentClass<ISpriteConfig, IComponents, SpriteComponent> = SpriteCo
 // import { ISpriteConfig, SpriteComponent } from './components/sprite'
 
 export interface IConfig {
-
-sprite?: ISpriteConfig
-
+{% for component in components %}
+{{ component.name }}?: {{ component.config }}
+{% endfor %}
 }
 
 export interface IComponents {
-
-sprite?: SpriteComponent
-
+{% for component in components %}
+{{ component.name }}?: {{ component.className }}
+{% endfor %}
 }
 
 const componentClasses = {
-
-sprite: SpriteComponent,
-
+{% for component in components %}
+{{ component.name }}: {{ component.className }},
+{% endfor %}
 }
 
 

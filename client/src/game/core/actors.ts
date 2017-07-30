@@ -95,7 +95,7 @@ export class ActorFactory<TComponents> implements IActorFactory<TComponents> {
     R.mapObjIndexed((componentConfig, componentName) => {
         const componentClass = this.componentClasses[componentName]
         if (componentClass) {
-          for (const asset of componentClass.assetsToLoad(config)) {
+          for (const asset of componentClass.assetsToLoad(componentConfig)) {
             assetsRequested.push(asset)
           }
         }

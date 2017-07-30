@@ -1,4 +1,5 @@
 client/www/scripts/**/*
+client/src/game/defs.ts
 
 *.log
 */node_modules
