@@ -8,6 +8,7 @@ export class TestEffector<TPhysics> extends GameEffector<{}, TPhysics, IComponen
 
   start = (shouldLoadContent: boolean) => {
     if (shouldLoadContent) {
+      console.log('hi')
       this.playerId = this.world.spawn(PlayerActor, {
         position: {y: 16},
         drag: {a:10},

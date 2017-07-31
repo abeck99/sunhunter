@@ -135,8 +135,8 @@ export class Actor implements IActor<IComponents> {
 }
 
 export const factory = new ActorFactory<IComponents>(componentClasses)
-export const makeWorld = (): World<Physics, IComponents> => {
-  return new World<Physics, IComponents>(new Physics(), factory)
+export const makeWorld = (physics: Physics): World<Physics, IComponents> => {
+  return new World<Physics, IComponents>(physics, factory)
 }
 
 

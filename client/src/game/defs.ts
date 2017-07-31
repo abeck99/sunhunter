@@ -317,6 +317,7 @@ export class SpriteComponent extends Component<ISpriteState, Physics, IComponent
   }
 
   sprite?: PIXI.Sprite
+  debugPoint?: PIXI.Graphics
 
   static assetsToLoad = (state: ISpriteState): IAsset[] => {
     return [
@@ -331,6 +332,14 @@ export class SpriteComponent extends Component<ISpriteState, Physics, IComponent
     this.world.container.addChild(this.sprite)
     this.getPos = positionLens(this.world)
     this.getScreen = screenLens(this.world)
+
+    this.debugPoint = new PIXI.Graphics()
+    this.debugPoint.lineStyle(2, 0xFF0000, 1)
+    this.debugPoint.moveTo(-4, -4)
+    this.debugPoint.lineTo(4,4)
+    this.debugPoint.moveTo(-4,4)
+    this.debugPoint.lineTo(4,-4)
+    this.sprite.addChild(this.debugPoint)
   }
 
   removeFromWorldPartTwo = () => {
@@ -516,8 +525,8 @@ export class Actor implements IActor<IComponents> {
 }
 
 export const factory = new ActorFactory<IComponents>(componentClasses)
-export const makeWorld = (): World<Physics, IComponents> => {
-  return new World<Physics, IComponents>(new Physics(), factory)
+export const makeWorld = (physics: Physics): World<Physics, IComponents> => {
+  return new World<Physics, IComponents>(physics, factory)
 }
 
 

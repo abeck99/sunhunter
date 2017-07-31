@@ -22,6 +22,7 @@ export class Game {
   private renderer: PIXI.WebGLRenderer | PIXI.CanvasRenderer
   private frame?: number
 
+  private physics: Physics
   private world: IWorld<Physics, IComponents>
 
   private effectors: GameEffector<any, Physics, IComponents>[]
@@ -34,33 +35,32 @@ export class Game {
     this.effectors = []
     this.renderer = PIXI.autoDetectRenderer(1366, 768, {
       backgroundColor: insideBackground.medium,
-    });
+    })
     this.renderer.view.style.border = "1px dashed black"
-    this.renderer.view.style.margin = "0 auto";
-    this.renderer.view.style.display = "block";
-    this.renderer.autoResize = true;
-    this.renderer.resize(window.innerWidth-50, window.innerHeight-50);
+    this.renderer.view.style.margin = "0 auto"
+    this.renderer.view.style.display = "block"
+    this.renderer.autoResize = true
+    this.renderer.resize(window.innerWidth-50, window.innerHeight-50)
 
-    this.world = makeWorld()
+    this.physics = new Physics(50*5)
+
+    this.world = makeWorld(this.physics)
     const testEffector = this.addEffector(new TestEffector(this.world, {}))
     const cameraEffector = this.addEffector(new CameraEffector(this.world, {
       followActor: testEffector.playerId,
     }))
     const generativeWorldEffector = this.addEffector(new GenerativeWorldEffector(this.world, {
-      gridSize: 32,
-      blockLoadSize: 6,
-      blockLoadDistance: 2,
-      followActor: testEffector.playerId,
+      gridSize: 50,
+      blockLoadSize: 4,
+      blockLoadDistance: 4,
+      followActor: 'camera',
     }));
 
     (window as any).test = testEffector;
     (window as any).camera = cameraEffector;
     (window as any).worldGen = generativeWorldEffector;
     (window as any).world = this.world;
-
-    this.addEffector(testEffector)
-    this.addEffector(cameraEffector)
-    this.addEffector(generativeWorldEffector)
+    (window as any).physics = this.physics;
 
     this.world.spawnWithId(SCREEN, BlankActor, {
       screen: {
@@ -68,23 +68,6 @@ export class Game {
         h: this.renderer.height,
       }
     })
-
-    //if (module.hot) {
-    //  console.log('hot reloading is enabled+!')
-    //  this.reloadWatcher = new KeyboardWatcher(Keys.R, {
-    //    pressed: () => {
-    //      const savedWorld = this.world.serialize()
-    //      const modeState = this.mode.getState()
-    //      this.world = require(`${server}app`).makeWorld()
-    //      this.world.deserialize(savedWorld, false, BlankActor)
-    //      this.mode.cleanup()
-    //      this.mode = new TestMode(this.world)
-    //      this.mode.setState(modeState)
-    //      this.mode.start(false)
-    //      console.log('Finished hot reload xz!')
-    //    }
-    //  })
-    //}
 
     this.tick()
   }

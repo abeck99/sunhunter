@@ -161,8 +161,8 @@ export class GenerativeWorldEffector<TPhysics> extends GameEffector<IWorldGenera
               spawnType = belowGround[yIndex][xIndex]
             }
           } else {
-            const yIndex = y - groundLevel - 1
-            if (yIndex < aboveGround.length) {
+            const yIndex = aboveGround.length - (y - groundLevel)
+            if (yIndex >= 0) {
               spawnType = aboveGround[yIndex][xIndex]
             }
           }
