@@ -14,7 +14,23 @@ export class PositionComponent extends Component<IPositionState, Physics, ICompo
   tick = (timeElapsed: number) => {
   }
 
-  updatePosition = (newX: number, newY: number) => {
-    
+  move = (dx: number, dy: number) => {
+    const destX = this.state.x+dx
+    const destY = this.state.y+dy
+
+    const movementRay = {
+      start: {x: this.state.x, y: this.state.y},
+      end: {x: destX, y: destY},
+    }
+
+    const moveResult = this.world.physics.clipRay(movementRay)
+    if (moveResult.point) {
+      console.log('collided!')
+      this.state.x = moveResult.point.x
+      this.state.y = moveResult.point.y
+    } else {
+      this.state.x = destX
+      this.state.y = destY
+    }
   }
 }

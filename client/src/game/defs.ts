@@ -3,7 +3,7 @@ import * as PIXI from "pixi.js"
 import * as R from 'ramda'
 import { LensFunction } from './core/types'
 import { Physics } from './physics'
-import { IVector2d } from './util/math'
+import { IVector2d, IBounds, IRay } from './util/math'
 import { CAMERA, SCREEN } from './util'
 
 
@@ -66,14 +66,46 @@ export class Component<TComponentState, TPhysics, TComponents> implements ICompo
 
 
 export interface IBoxColliderState {
-  x?: number
-  y?: number
+  w?: number
+  h?: number
+  isStatic?: boolean
 }
 
 export class BoxColliderComponent extends Component<IBoxColliderState, Physics, IComponents> {
   static defaultState = {
-    x: 1,
-    y: 1,
+    w: 1,
+    h: 1,
+    isStatic: false,
+  }
+
+  bounds?: IBounds
+  partitionId?: string
+
+  addToWorldPartTwo = () => {
+    console.log('a')
+    const pos = this.actor.components.position
+
+    if (pos) {
+      this.bounds = {
+        uuid: this.actor.uuid,
+        topLeft: {x: pos.state.x, y: pos.state.y},
+        width: this.state.w,
+        height: this.state.h,
+      }
+    }
+
+    if (this.bounds && this.state.isStatic) {
+      this.partitionId = this.world.physics.addToWorld(this.bounds)
+    }
+  }
+
+  removeFromWorldPartTwo = () => {
+    const partitionId = this.partitionId
+    this.partitionId = null
+
+    if (partitionId) {
+      this.world.physics.removeFromWorld(partitionId, this.actor.uuid)
+    }
   }
 
   tick = (timeElapsed: number) => {
@@ -240,8 +272,24 @@ export class PositionComponent extends Component<IPositionState, Physics, ICompo
   tick = (timeElapsed: number) => {
   }
 
-  updatePosition = (newX: number, newY: number) => {
-    
+  move = (dx: number, dy: number) => {
+    const destX = this.state.x+dx
+    const destY = this.state.y+dy
+
+    const movementRay = {
+      start: {x: this.state.x, y: this.state.y},
+      end: {x: destX, y: destY},
+    }
+
+    const moveResult = this.world.physics.clipRay(movementRay)
+    if (moveResult.point) {
+      console.log('collided!')
+      this.state.x = moveResult.point.x
+      this.state.y = moveResult.point.y
+    } else {
+      this.state.x = destX
+      this.state.y = destY
+    }
   }
 }
 
@@ -401,9 +449,9 @@ export class VelocityComponent extends Component<IVelocityState, Physics, ICompo
   }
 
   tick = (timeElapsed: number) => {
-    if (this.actor.components.position) {
-      this.actor.components.position.state.x += this.state.x*timeElapsed
-      this.actor.components.position.state.y += this.state.y*timeElapsed
+    const pos = this.actor.components.position
+    if (pos) {
+      pos.move(this.state.x*timeElapsed, this.state.y*timeElapsed)
     }
   }
 

@@ -9,6 +9,11 @@ export class BlockActor extends Actor {
       }
     },
     position: {},
+    boxCollider: {
+      w: 50,
+      h: 50,
+      isStatic: true,
+    }
   }
 }
 

@@ -10,6 +10,11 @@ export class PlayerActor extends Actor {
     },
     position: {},
     velocity: {},
+    boxCollider: {
+      w: 16,
+      h: 32,
+      isStatic: false,
+    },
   }
 }
 

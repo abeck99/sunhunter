@@ -12,9 +12,9 @@ export class VelocityComponent extends Component<IVelocityState, Physics, ICompo
   }
 
   tick = (timeElapsed: number) => {
-    if (this.actor.components.position) {
-      this.actor.components.position.state.x += this.state.x*timeElapsed
-      this.actor.components.position.state.y += this.state.y*timeElapsed
+    const pos = this.actor.components.position
+    if (pos) {
+      pos.move(this.state.x*timeElapsed, this.state.y*timeElapsed)
     }
   }
 

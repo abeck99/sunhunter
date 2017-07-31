@@ -1,14 +1,46 @@
 boxCollider,IBoxColliderState,BoxColliderComponent
 
 export interface IBoxColliderState {
-  x?: number
-  y?: number
+  w?: number
+  h?: number
+  isStatic?: boolean
 }
 
 export class BoxColliderComponent extends Component<IBoxColliderState, Physics, IComponents> {
   static defaultState = {
-    x: 1,
-    y: 1,
+    w: 1,
+    h: 1,
+    isStatic: false,
+  }
+
+  bounds?: IBounds
+  partitionId?: string
+
+  addToWorldPartTwo = () => {
+    console.log('a')
+    const pos = this.actor.components.position
+
+    if (pos) {
+      this.bounds = {
+        uuid: this.actor.uuid,
+        topLeft: {x: pos.state.x, y: pos.state.y},
+        width: this.state.w,
+        height: this.state.h,
+      }
+    }
+
+    if (this.bounds && this.state.isStatic) {
+      this.partitionId = this.world.physics.addToWorld(this.bounds)
+    }
+  }
+
+  removeFromWorldPartTwo = () => {
+    const partitionId = this.partitionId
+    this.partitionId = null
+
+    if (partitionId) {
+      this.world.physics.removeFromWorld(partitionId, this.actor.uuid)
+    }
   }
 
   tick = (timeElapsed: number) => {
