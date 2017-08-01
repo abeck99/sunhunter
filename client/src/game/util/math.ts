@@ -23,10 +23,86 @@ export enum IntersctionType {
   Bottom
 }
 
+export const topNormal2d: IVector2d = {
+  x: -1,
+  y: 0,
+}
+
+export const bottomNormal2d: IVector2d = {
+  x: 1,
+  y: 0,
+}
+
+export const leftNormal2d: IVector2d = {
+  x: 0,
+  y: -1,
+}
+
+export const rightNormal2d: IVector2d = {
+  x: 0,
+  y: 1,
+}
+
 export interface IIntersectionResult {
   type: IntersctionType
   point?: IVector2d
   uuid?: string
+}
+
+export const crossProduct = (a: IVector2d, b: IVector2d): number => {
+  return a.x*b.y - a.y*b.x
+}
+
+export const dotProduct = (a: IVector2d, b: IVector2d): number => {
+  return a.x*b.x + a.y*b.y
+}
+
+export const lengthSquared = (a: IVector2d): number => {
+  return a.x*a.x + a.y*a.y
+}
+
+export const length = (a: IVector2d): number => {
+  return Math.sqrt(lengthSquared(a))
+}
+
+export const distanceSquared = (a: IVector2d, b: IVector2d): number => {
+  const dx = b.x-a.x
+  const dy = b.y-a.y
+  return dx*dx + dy*dy
+}
+
+export const distance = (a: IVector2d, b: IVector2d): number => {
+  return Math.sqrt(distanceSquared(a, b))
+}
+
+export const integratePosition1d = (pos: number, vel: number, acc: number, t: number): number => {
+  return pos + vel*t + (0.5*acc*t*t)
+}
+
+export const integratePosition2dMut = (pos: IVector2d, vel: IVector2d, acc: IVector2d, t: number) => {
+  pos.x = integratePosition1d(pos.x, vel.x, acc.x, t)
+  pos.y = integratePosition1d(pos.y, vel.y, acc.y, t)
+}
+
+export const add2dMut = (a: IVector2d, b: IVector2d) => {
+  a.x += b.x
+  a.y += b.y
+}
+
+export const sub2dMut = (a: IVector2d, b: IVector2d) => {
+  a.x -= b.x
+  b.y -= b.y
+}
+
+export const mul2dMut = (a: IVector2d, s: number) => {
+  a.x *= s
+  a.y *= s
+}
+
+export const reflectAroundNormal2dMut = (a: IVector2d, n: IVector2d) => {
+  const dDotNTimes2 = 2*dotProduct(a, n)
+  a.x -= dDotNTimes2 * n.x
+  a.y -= dDotNTimes2 * n.y
 }
 
 const INSIDE  = 0b0000
@@ -67,19 +143,30 @@ export const segmentIntersection = (a: IRay, b: IRay): (IVector2d | null) => {
 }
 
 export const intersectionWithBounds = (ray: IRay, bounds: IBounds): IIntersectionResult => {
+  const anyWindow = window as any
+  if (!anyWindow.wiggleRoom) {
+    anyWindow.wiggleRoom = 1
+  }
+  const wiggleRoom = anyWindow.wiggleRoom
+
   const xmin = bounds.topLeft.x
   const xmax = bounds.topLeft.x + bounds.width
   const ymin = bounds.topLeft.y
   const ymax = bounds.topLeft.y + bounds.height
 
-  const startPos = (ray.start.x < xmin ? LEFT : 0b0) |
-                   (ray.start.x > xmax ? RIGHT : 0b0) |
-                   (ray.start.y < ymin ? TOP : 0b0) |
-                   (ray.start.y > ymax ? BOTTOM : 0b0)
-  const endPos   = (ray.end.x < xmin ? LEFT : 0b0) |
-                   (ray.end.x > xmax ? RIGHT : 0b0) |
-                   (ray.end.y < ymin ? TOP : 0b0) |
-                   (ray.end.y > ymax ? BOTTOM : 0b0)
+  const xminW = xmin + wiggleRoom
+  const xmaxW = xmax - wiggleRoom
+  const yminW = ymin + wiggleRoom
+  const ymaxW = ymax - wiggleRoom
+
+  const startPos = (ray.start.x < xminW ? LEFT : 0b0) |
+                   (ray.start.x > xmaxW ? RIGHT : 0b0) |
+                   (ray.start.y < yminW ? TOP : 0b0) |
+                   (ray.start.y > ymaxW ? BOTTOM : 0b0)
+  const endPos   = (ray.end.x < xminW ? LEFT : 0b0) |
+                   (ray.end.x > xmaxW ? RIGHT : 0b0) |
+                   (ray.end.y < yminW ? TOP : 0b0) |
+                   (ray.end.y > ymaxW ? BOTTOM : 0b0)
 
   if (startPos & endPos) { // if true, both are in the same region and we can safely discard
     return {type: IntersctionType.None}

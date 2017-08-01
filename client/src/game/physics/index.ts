@@ -1,5 +1,10 @@
 import * as R from 'ramda'
-import  { IVector2d, IRay, intersectionWithBounds, IBounds, IntersctionType, IIntersectionResult } from '../util/math'
+import  { IVector2d, IRay, intersectionWithBounds, IBounds, IntersctionType, IIntersectionResult, dotProduct, distance, integratePosition2dMut, reflectAroundNormal2dMut,
+          topNormal2d, bottomNormal2d, leftNormal2d, rightNormal2d } from '../util/math'
+
+const debugLog = (s: string) => {
+  console.log(s)
+}
 
 interface IPartition {
   partitionBounds: IBounds
@@ -7,6 +12,43 @@ interface IPartition {
   partY: number
   collisionBounds: IBounds[]
 }
+
+interface IMovementResult {
+  type: IntersctionType
+  vel: IVector2d
+  pos: IVector2d
+  acc: IVector2d
+}
+
+interface IObjectProperties {
+  mass: number
+  bounce: number
+  drag: IVector2d // 0.47 for ball, 1.05 for cube, 0.82 for long cylinder, 0.04 for streamlined object
+                  // This of course varies if you're moving left or right, but simplifying it on just x/y axis
+  frontalArea: number // This of course varies by direction...
+}
+
+enum ForceType {
+  Acceleration = 1,
+  Medium,
+}
+
+interface IBaseForce {
+  type: ForceType
+}
+
+// For example, gravity is {x: 0, y: -9.81}
+interface IAccelerationForce extends IBaseForce {
+  v: IVector2d
+}
+
+interface IMediumForce extends IBaseForce {
+  density: number
+}
+
+type Force = IAccelerationForce | IMediumForce
+
+const maxCollisionRecursion = 4
 
 export class Physics {
   spacePartitionSize: number
@@ -170,7 +212,101 @@ export class Physics {
 
   clipRay = (ray: IRay): IIntersectionResult => {
     const partitions = this.partitionsRayIntersectsWith(ray)
+    debugLog(`checking ${partitions.length} paritions`)
     return this.clipRayInPartitions(ray, partitions)
+  }
+
+  applyForceMut = (mutableAcc: IVector2d, force: Force, vel: IVector2d, obj: IObjectProperties) => {
+    switch (force.type) {
+      case ForceType.Acceleration:
+      {
+        const f = force as IAccelerationForce
+        mutableAcc.x += obj.mass * f.v.x
+        mutableAcc.y += obj.mass * f.v.y
+        break
+      }
+      case ForceType.Medium:
+      {
+        const f = force as IMediumForce
+        mutableAcc.x += -0.5 * f.density * obj.drag.x * obj.frontalArea * vel.x * vel.x
+        mutableAcc.y += -0.5 * f.density * obj.drag.y * obj.frontalArea * vel.y * vel.y
+        break
+      }
+    }
+  }
+
+  // Forces is typically only gravity (9.81 towards ground)
+  moveMut = (pos: IVector2d, vel: IVector2d, acc: IVector2d, t: number, obj: IObjectProperties, forces: Force[], withCollision: boolean = true, recursionCount: number = 0): IntersctionType => {
+    if (obj.mass <= 0.00001) {
+      debugLog('Mass is too small to calculate movement!')
+      return IntersctionType.None
+    }
+
+    const pos_ = pos
+    integratePosition2dMut(pos, vel, acc, t)
+    const dFull = distance(pos_, pos)
+
+    if (dFull > 0 && withCollision) {
+      const res = this.clipRay({start: pos_, end: pos})
+      if (res.type != IntersctionType.None) {
+        if (recursionCount < maxCollisionRecursion) {
+          // We had an intersection, so 
+          //    1) guess the time that the intersection occured
+          //    2) run moveMut on that interval, ignoring clipRay
+          //    3) rerun moveMut on that point with a reflected velocity vector
+
+          // guess time interval at collision
+          const dClipped = distance(pos_, res.point)
+          const dRatio = dClipped / dFull
+
+          // Rewind
+          const t2 = t*dRatio
+          pos.x = pos_.x 
+          pos.y = pos_.y
+
+          this.moveMut(pos, vel, acc, t2, obj, forces, false)
+
+          const t3 = t-t2
+          // Reflect vel around res.type side
+          switch (res.type) {
+            case IntersctionType.Top:
+              reflectAroundNormal2dMut(vel, topNormal2d)
+              break
+            case IntersctionType.Bottom:
+              reflectAroundNormal2dMut(vel, bottomNormal2d)
+              break
+            case IntersctionType.Left:
+              reflectAroundNormal2dMut(vel, leftNormal2d)
+              break
+            case IntersctionType.Right:
+              reflectAroundNormal2dMut(vel, rightNormal2d)
+              break
+          }
+
+          // Continue with reflected vector
+          return this.moveMut(pos, vel, acc, t3, obj, forces, true, recursionCount+1)
+        } else {
+          debugLog('Reached max recursion count for collision...')
+        }
+      }
+    }
+
+    const acc_ = acc
+    acc.x = 0
+    acc.y = 0
+    for (const force of forces) {
+      this.applyForceMut(acc, force, vel, obj)
+    }
+    acc.x = acc.x / obj.mass
+    acc.y = acc.y / obj.mass
+
+    const avgAccX = 0.5*(acc_.x+acc.x)
+    const avgAccY = 0.5*(acc_.y*acc.y)
+
+    vel.x += avgAccX * t
+    vel.y += avgAccY * t
+
+    return IntersctionType.None
   }
 }
 
