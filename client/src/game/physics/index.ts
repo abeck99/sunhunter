@@ -20,7 +20,7 @@ interface IMovementResult {
   acc: IVector2d
 }
 
-interface IObjectProperties {
+export interface IObjectProperties {
   mass: number
   bounce: number
   drag: IVector2d // 0.47 for ball, 1.05 for cube, 0.82 for long cylinder, 0.04 for streamlined object
@@ -28,25 +28,25 @@ interface IObjectProperties {
   frontalArea: number // This of course varies by direction...
 }
 
-enum ForceType {
+export enum ForceType {
   Acceleration = 1,
   Medium,
 }
 
-interface IBaseForce {
+export interface IBaseForce {
   type: ForceType
 }
 
 // For example, gravity is {x: 0, y: -9.81}
-interface IAccelerationForce extends IBaseForce {
+export interface IAccelerationForce extends IBaseForce {
   v: IVector2d
 }
 
-interface IMediumForce extends IBaseForce {
+export interface IMediumForce extends IBaseForce {
   density: number
 }
 
-type Force = IAccelerationForce | IMediumForce
+export type Force = IAccelerationForce | IMediumForce
 
 const maxCollisionRecursion = 4
 
@@ -236,7 +236,7 @@ export class Physics {
   }
 
   // Forces is typically only gravity (9.81 towards ground)
-  moveMut = (pos: IVector2d, vel: IVector2d, acc: IVector2d, t: number, obj: IObjectProperties, forces: Force[], withCollision: boolean = true, recursionCount: number = 0): IntersctionType => {
+  moveMut = (pos: IVector2d, vel: IVector2d, acc: IVector2d, obj: IObjectProperties, forces: Force[], t: number, withCollision: boolean = true, recursionCount: number = 0): IntersctionType => {
     if (obj.mass <= 0.00001) {
       debugLog('Mass is too small to calculate movement!')
       return IntersctionType.None
@@ -264,7 +264,7 @@ export class Physics {
           pos.x = pos_.x 
           pos.y = pos_.y
 
-          this.moveMut(pos, vel, acc, t2, obj, forces, false)
+          this.moveMut(pos, vel, acc, obj, forces, t2, false)
 
           const t3 = t-t2
           // Reflect vel around res.type side
@@ -284,7 +284,7 @@ export class Physics {
           }
 
           // Continue with reflected vector
-          return this.moveMut(pos, vel, acc, t3, obj, forces, true, recursionCount+1)
+          return this.moveMut(pos, vel, acc, obj, forces, t3, true, recursionCount+1)
         } else {
           debugLog('Reached max recursion count for collision...')
         }

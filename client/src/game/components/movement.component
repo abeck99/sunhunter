@@ -1,0 +1,33 @@
+movement,IMovementState,MovementComponent
+
+export interface IMovementState {
+  vel: IVector2d
+  acc: IVector2d
+  force: IVector2d
+}
+
+export class MovementComponent extends Component<IMovementState, Physics, IComponents> {
+  static defaultState = {
+    vel: {x:0, y:0},
+    acc: {x:0, y:0},
+    force: {x:0, y:0},
+  }
+
+  applyForce = (force: IVector2d) => {
+    add2dMut(this.state.force, force)
+  }
+
+  tick = (timeElapsed: number) => {
+    const objectPhysics = this.actor.components.objectPhysics
+    const worldPhysics = this.world.root.components.worldPhysics
+    const pos = this.actor.components.position
+
+    if (!objectPhysics || !worldPhysics || !worldPhysics.forces || !pos) {
+      return
+    }
+
+    const forces = R.append({type: ForceType.Acceleration, v: this.state.force}, worldPhysics.forces)
+
+    this.world.physics.moveMut(pos.state, this.state.vel, this.state.acc, objectPhysics.state, forces, timeElapsed)
+  }
+}

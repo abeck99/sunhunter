@@ -1,7 +1,14 @@
 import { GameEffector } from '../core/effectors'
 import { Keys } from '../core/interactions'
 import { PlayerActor } from '../actors/Player'
-import { IComponents, velocityLens } from '../defs'
+import { IComponents, movementLens } from '../defs'
+
+const forceAmount = 1
+
+const upForce = {x:0, y:forceAmount}
+const downForce = {x:0, y:-1*forceAmount}
+const leftForce = {x:-1*forceAmount, y:0}
+const rightForce = {x:forceAmount, y:0}
 
 export class TestEffector<TPhysics> extends GameEffector<{}, TPhysics, IComponents> {
   playerId?: string
@@ -10,27 +17,39 @@ export class TestEffector<TPhysics> extends GameEffector<{}, TPhysics, IComponen
     if (shouldLoadContent) {
       console.log('hi')
       this.playerId = this.world.spawn(PlayerActor, {
-        position: {y: 16},
-        drag: {a:10},
+        position: {x: 0, y: 16},
       }).uuid
     }
 
-    const velocity = velocityLens(this.world)
-    this.watchKey(Keys.W, {pressed: () => {
-      velocity(this.playerId).applyForce(0,-30)
-    }})
+    const movement = movementLens(this.world)
+    this.watchKey(Keys.W, {
+      pressed: () => {
+        movement(this.playerId).applyForce(upForce)
+      },
+      released: () => {
+        movement(this.playerId).applyForce(downForce)
+      }})
 
     this.watchKey(Keys.S, {pressed: () => {
-      velocity(this.playerId).applyForce(0, 30)
-    }})
+        movement(this.playerId).applyForce(downForce)
+      },
+      released: () => {
+        movement(this.playerId).applyForce(upForce)
+      }})
 
     this.watchKey(Keys.A, {pressed: () => {
-      velocity(this.playerId).applyForce(-30, 0)
-    }})
+        movement(this.playerId).applyForce(leftForce)
+      },
+      released: () => {
+        movement(this.playerId).applyForce(rightForce)
+      }})
 
     this.watchKey(Keys.D, {pressed: () => {
-      velocity(this.playerId).applyForce(30, 0)
-    }})
+        movement(this.playerId).applyForce(rightForce)
+      },
+      released: () => {
+        movement(this.playerId).applyForce(leftForce)
+      }})
   }
 
   tick = (elapsedTime: number) => {

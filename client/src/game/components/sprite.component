@@ -46,13 +46,13 @@ export class SpriteComponent extends Component<ISpriteState, Physics, IComponent
 
   tick = (timeElapsed: number) => {
     const pos = this.actor.components.position
-    if (!this.sprite || !pos || !this.getPos || !this.getScreen) {
+    const screen = this.world.root.components.screen
+    if (!this.sprite || !pos || !this.getPos || !screen) {
       return
     }
 
     const cameraPos = this.getPos(CAMERA)
-    const screen = this.getScreen(SCREEN)
-    if (!cameraPos || !screen) {
+    if (!cameraPos) {
       return
     }
 

@@ -1,0 +1,30 @@
+worldPhysics,IWorldPhysicsState,WorldPhysicsComponent
+
+export interface IWorldPhysicsState {
+  gravity: IVector2d,
+  mediumDensity: number,
+}
+
+export class WorldPhysicsComponent extends Component<IWorldPhysicsState, Physics, IComponents> {
+  static defaultState = {
+    gravity: {x: 0, y: -9.81},
+    mediumDensity: 1.2, // Air denisty is 1.2, water is 1000 or about
+  }
+
+  forces: Force[]
+
+  addToWorldPartTwo = () => {
+    this.forces = [ {
+        type: ForceType.Acceleration,
+        v: this.state.gravity,
+      }, {
+        type: ForceType.Medium,
+        density: this.state.mediumDensity,
+      }
+    ]
+  }
+
+  removeFromWorldPartTwo = () => {
+    this.forces = null
+  }
+}

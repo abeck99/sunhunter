@@ -43,6 +43,10 @@ export class BoxColliderComponent extends Component<IBoxColliderState, Physics, 
     }
   }
 
+  getFrontalArea = () => {
+    return 0.5*(this.state.w+this.state.h)
+  }
+
   tick = (timeElapsed: number) => {
   }
 }

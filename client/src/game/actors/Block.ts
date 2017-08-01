@@ -8,7 +8,7 @@ export class BlockActor extends Actor {
         url: "assets/test/block.png"
       }
     },
-    position: {},
+    position: {x:0, y:0},
     boxCollider: {
       w: 50,
       h: 50,

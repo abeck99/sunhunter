@@ -8,9 +8,8 @@ import { insideBackground } from './util/colors'
 import { Keys, KeyboardWatcher } from './core/interactions'
 import { BlankActor } from './actors/Blank'
 import { Physics } from './physics'
-import { SCREEN } from './util'
 import { GameEffector } from './core/effectors'
-
+import { WorldPhysicsComponent } from './defs'
 
 
 import { TestEffector } from './effectors/test'
@@ -45,6 +44,15 @@ export class Game {
     this.physics = new Physics(50*5)
 
     this.world = makeWorld(this.physics)
+    this.world.root = this.world.spawnWithId('root', BlankActor, {
+      screen: {
+        w: this.renderer.width,
+        h: this.renderer.height,
+      },
+      worldPhysics: WorldPhysicsComponent.defaultState,
+
+    })
+
     const testEffector = this.addEffector(new TestEffector(this.world, {}))
     const cameraEffector = this.addEffector(new CameraEffector(this.world, {
       followActor: testEffector.playerId,
@@ -61,13 +69,6 @@ export class Game {
     (window as any).worldGen = generativeWorldEffector;
     (window as any).world = this.world;
     (window as any).physics = this.physics;
-
-    this.world.spawnWithId(SCREEN, BlankActor, {
-      screen: {
-        w: this.renderer.width,
-        h: this.renderer.height,
-      }
-    })
 
     this.tick()
   }
@@ -96,7 +97,7 @@ export class Game {
 
   tick = () => {
     this.meter.tickStart()
-    const fakeTimeElaspsed = 0.1
+    const fakeTimeElaspsed = 0.016
     for (const effector of this.effectors) {
       effector.tick(fakeTimeElaspsed)
     }

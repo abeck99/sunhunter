@@ -3,8 +3,11 @@ import * as PIXI from "pixi.js"
 import * as R from 'ramda'
 import { LensFunction } from './core/types'
 import { Physics } from './physics'
-import { IVector2d, IBounds, IRay } from './util/math'
-import { CAMERA, SCREEN } from './util'
+import { IVector2d, IBounds, IRay, add2dMut } from './util/math'
+import { CAMERA } from './util'
+
+// TODO: this shouldn't be in core
+import { ForceType, Force } from './physics'
 
 
 export class Component<TComponentState, TPhysics, TComponents> implements IComponent<TComponentState, TPhysics, TComponents> {

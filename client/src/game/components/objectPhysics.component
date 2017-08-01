@@ -1,0 +1,25 @@
+objectPhysics,IObjectProperties,ObjectPhysicsComponent
+
+import { IObjectProperties } from './physics'
+
+export class ObjectPhysicsComponent extends Component<IObjectProperties, Physics, IComponents> {
+  static defaultState = {
+    mass: 0.1,
+    bounce: 0.1,
+    drag: {x: 0.47, y: 0.47},
+    frontalArea: 1 / 1000,
+  }
+
+  tick = (timeElapsed: number) => {
+    const worldForces = this.world.root.components.worldPhysics || []
+
+  }
+}
+
+export interface IObjectProperties {
+  mass: number
+  bounce: number
+  drag: IVector2d // 0.47 for ball, 1.05 for cube, 0.82 for long cylinder, 0.04 for streamlined object
+                  // This of course varies if you're moving left or right, but simplifying it on just x/y axis
+  frontalArea: number // This of course varies by direction...
+}

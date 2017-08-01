@@ -1,2 +1,2 @@
 export const CAMERA = "camera"
-export const SCREEN = "screen"
+export const ROOT = "root"

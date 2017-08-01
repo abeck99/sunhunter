@@ -40,6 +40,7 @@ export type LensFunction<T> = (uuid: string) => T
 export interface IWorld<TPhysics, TComponents> {
   container: Container
   physics: TPhysics
+  root: IActor<TComponents>
 
   tick: TickFunction
   

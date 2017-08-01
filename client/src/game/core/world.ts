@@ -8,6 +8,7 @@ import { Actor } from '../defs'
 export class World<TPhysics, TComponents> implements IWorld<TPhysics, TComponents> {
   container: PIXI.Container
   physics: TPhysics
+  root: IActor<TComponents>
 
   private actors: {
     [key: string]: IActor<TComponents>

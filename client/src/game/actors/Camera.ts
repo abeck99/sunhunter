@@ -3,7 +3,7 @@ import { IComponentsState, IComponents, Actor } from '../defs'
 
 export class CameraActor extends Actor {
   static defaults: IComponentsState = {
-    position: {},
+    position: {x:0, y:0},
   }
 }
 

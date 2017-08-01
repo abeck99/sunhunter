@@ -3,8 +3,11 @@ import * as PIXI from "pixi.js"
 import * as R from 'ramda'
 import { LensFunction } from './core/types'
 import { Physics } from './physics'
-import { IVector2d, IBounds, IRay } from './util/math'
-import { CAMERA, SCREEN } from './util'
+import { IVector2d, IBounds, IRay, add2dMut } from './util/math'
+import { CAMERA } from './util'
+
+// TODO: this shouldn't be in core
+import { ForceType, Force } from './physics'
 
 
 export class Component<TComponentState, TPhysics, TComponents> implements IComponent<TComponentState, TPhysics, TComponents> {
@@ -108,6 +111,10 @@ export class BoxColliderComponent extends Component<IBoxColliderState, Physics, 
     }
   }
 
+  getFrontalArea = () => {
+    return 0.5*(this.state.w+this.state.h)
+  }
+
   tick = (timeElapsed: number) => {
   }
 }
@@ -125,51 +132,6 @@ export const boxColliderLens = (world: IWorld<any, IComponents>): LensFunction<B
 export const boxColliderStateLens = (world: IWorld<any, IComponents>): LensFunction<IBoxColliderState> => {
   return world.lens((actor: IActor<IComponents>) => {
     return actor.components.boxCollider.state
-  })
-}
-
-
-
-export interface IDragState {
-  a?: number
-}
-
-export class DragComponent extends Component<IDragState, Physics, IComponents> {
-  static defaultState = {
-    a: 0,
-  }
-
-  tick = (timeElapsed: number) => {
-    const v_ = this.actor.components.velocity
-    if (v_) {
-      const v = v_.state
-      const velocityMagnitude = Math.sqrt(v.x*v.x + v.y*v.y)
-      const newMag = velocityMagnitude - (this.state.a*timeElapsed)
-
-      if (velocityMagnitude > 0.01) {
-        v.x = (v.x/velocityMagnitude)*newMag
-        v.y = (v.y/velocityMagnitude)*newMag
-      } else {
-        v.x = 0
-        v.y = 0
-      }
-    }
-  }
-}
-
-{
- const _: IComponentClass<IDragState, Physics, IComponents, DragComponent> = DragComponent
-}
-
-export const dragLens = (world: IWorld<any, IComponents>): LensFunction<DragComponent> => {
-  return world.lens((actor: IActor<IComponents>) => {
-    return actor.components.drag
-  })
-}
-
-export const dragStateLens = (world: IWorld<any, IComponents>): LensFunction<IDragState> => {
-  return world.lens((actor: IActor<IComponents>) => {
-    return actor.components.drag.state
   })
 }
 
@@ -230,6 +192,56 @@ export const followStateLens = (world: IWorld<any, IComponents>): LensFunction<I
 
 
 
+export interface IMovementState {
+  vel: IVector2d
+  acc: IVector2d
+  force: IVector2d
+}
+
+export class MovementComponent extends Component<IMovementState, Physics, IComponents> {
+  static defaultState = {
+    vel: {x:0, y:0},
+    acc: {x:0, y:0},
+    force: {x:0, y:0},
+  }
+
+  applyForce = (force: IVector2d) => {
+    add2dMut(this.state.force, force)
+  }
+
+  tick = (timeElapsed: number) => {
+    const objectPhysics = this.actor.components.objectPhysics
+    const worldPhysics = this.world.root.components.worldPhysics
+    const pos = this.actor.components.position
+
+    if (!objectPhysics || !worldPhysics || !worldPhysics.forces || !pos) {
+      return
+    }
+
+    const forces = R.append({type: ForceType.Acceleration, v: this.state.force}, worldPhysics.forces)
+
+    this.world.physics.moveMut(pos.state, this.state.vel, this.state.acc, objectPhysics.state, forces, timeElapsed)
+  }
+}
+
+{
+ const _: IComponentClass<IMovementState, Physics, IComponents, MovementComponent> = MovementComponent
+}
+
+export const movementLens = (world: IWorld<any, IComponents>): LensFunction<MovementComponent> => {
+  return world.lens((actor: IActor<IComponents>) => {
+    return actor.components.movement
+  })
+}
+
+export const movementStateLens = (world: IWorld<any, IComponents>): LensFunction<IMovementState> => {
+  return world.lens((actor: IActor<IComponents>) => {
+    return actor.components.movement.state
+  })
+}
+
+
+
 export interface INetState {
   x: boolean
 }
@@ -258,9 +270,51 @@ export const netStateLens = (world: IWorld<any, IComponents>): LensFunction<INet
 
 
 
+import { IObjectProperties } from './physics'
+
+export class ObjectPhysicsComponent extends Component<IObjectProperties, Physics, IComponents> {
+  static defaultState = {
+    mass: 0.1,
+    bounce: 0.1,
+    drag: {x: 0.47, y: 0.47},
+    frontalArea: 1 / 1000,
+  }
+
+  tick = (timeElapsed: number) => {
+    const worldForces = this.world.root.components.worldPhysics || []
+
+  }
+}
+
+export interface IObjectProperties {
+  mass: number
+  bounce: number
+  drag: IVector2d // 0.47 for ball, 1.05 for cube, 0.82 for long cylinder, 0.04 for streamlined object
+                  // This of course varies if you're moving left or right, but simplifying it on just x/y axis
+  frontalArea: number // This of course varies by direction...
+}
+
+{
+ const _: IComponentClass<IObjectProperties, Physics, IComponents, ObjectPhysicsComponent> = ObjectPhysicsComponent
+}
+
+export const objectPhysicsLens = (world: IWorld<any, IComponents>): LensFunction<ObjectPhysicsComponent> => {
+  return world.lens((actor: IActor<IComponents>) => {
+    return actor.components.objectPhysics
+  })
+}
+
+export const objectPhysicsStateLens = (world: IWorld<any, IComponents>): LensFunction<IObjectProperties> => {
+  return world.lens((actor: IActor<IComponents>) => {
+    return actor.components.objectPhysics.state
+  })
+}
+
+
+
 export interface IPositionState {
-  x?: number
-  y?: number
+  x: number
+  y: number
 }
 
 export class PositionComponent extends Component<IPositionState, Physics, IComponents> {
@@ -270,26 +324,6 @@ export class PositionComponent extends Component<IPositionState, Physics, ICompo
   }
 
   tick = (timeElapsed: number) => {
-  }
-
-  move = (dx: number, dy: number) => {
-    const destX = this.state.x+dx
-    const destY = this.state.y+dy
-
-    const movementRay = {
-      start: {x: this.state.x, y: this.state.y},
-      end: {x: destX, y: destY},
-    }
-
-    const moveResult = this.world.physics.clipRay(movementRay)
-    if (moveResult.point) {
-      console.log('collided!')
-      this.state.x = moveResult.point.x
-      this.state.y = moveResult.point.y
-    } else {
-      this.state.x = destX
-      this.state.y = destY
-    }
   }
 }
 
@@ -399,13 +433,13 @@ export class SpriteComponent extends Component<ISpriteState, Physics, IComponent
 
   tick = (timeElapsed: number) => {
     const pos = this.actor.components.position
-    if (!this.sprite || !pos || !this.getPos || !this.getScreen) {
+    const screen = this.world.root.components.screen
+    if (!this.sprite || !pos || !this.getPos || !screen) {
       return
     }
 
     const cameraPos = this.getPos(CAMERA)
-    const screen = this.getScreen(SCREEN)
-    if (!cameraPos || !screen) {
+    if (!cameraPos) {
       return
     }
 
@@ -437,43 +471,48 @@ export const spriteStateLens = (world: IWorld<any, IComponents>): LensFunction<I
 
 
 
-export interface IVelocityState {
-  x?: number
-  y?: number
+export interface IWorldPhysicsState {
+  gravity: IVector2d,
+  mediumDensity: number,
 }
 
-export class VelocityComponent extends Component<IVelocityState, Physics, IComponents> {
+export class WorldPhysicsComponent extends Component<IWorldPhysicsState, Physics, IComponents> {
   static defaultState = {
-    x: 0,
-    y: 0,
+    gravity: {x: 0, y: -9.81},
+    mediumDensity: 1.2, // Air denisty is 1.2, water is 1000 or about
   }
 
-  tick = (timeElapsed: number) => {
-    const pos = this.actor.components.position
-    if (pos) {
-      pos.move(this.state.x*timeElapsed, this.state.y*timeElapsed)
-    }
+  forces: Force[]
+
+  addToWorldPartTwo = () => {
+    this.forces = [ {
+        type: ForceType.Acceleration,
+        v: this.state.gravity,
+      }, {
+        type: ForceType.Medium,
+        density: this.state.mediumDensity,
+      }
+    ]
   }
 
-  applyForce = (x: number, y: number) => {
-    this.state.x += x
-    this.state.y += y
+  removeFromWorldPartTwo = () => {
+    this.forces = null
   }
 }
 
 {
- const _: IComponentClass<IVelocityState, Physics, IComponents, VelocityComponent> = VelocityComponent
+ const _: IComponentClass<IWorldPhysicsState, Physics, IComponents, WorldPhysicsComponent> = WorldPhysicsComponent
 }
 
-export const velocityLens = (world: IWorld<any, IComponents>): LensFunction<VelocityComponent> => {
+export const worldPhysicsLens = (world: IWorld<any, IComponents>): LensFunction<WorldPhysicsComponent> => {
   return world.lens((actor: IActor<IComponents>) => {
-    return actor.components.velocity
+    return actor.components.worldPhysics
   })
 }
 
-export const velocityStateLens = (world: IWorld<any, IComponents>): LensFunction<IVelocityState> => {
+export const worldPhysicsStateLens = (world: IWorld<any, IComponents>): LensFunction<IWorldPhysicsState> => {
   return world.lens((actor: IActor<IComponents>) => {
-    return actor.components.velocity.state
+    return actor.components.worldPhysics.state
   })
 }
 
@@ -484,11 +523,13 @@ export interface IComponentsState {
 
 boxCollider?: IBoxColliderState
 
-drag?: IDragState
-
 follow?: IFollowState
 
+movement?: IMovementState
+
 net?: INetState
+
+objectPhysics?: IObjectProperties
 
 position?: IPositionState
 
@@ -496,7 +537,7 @@ screen?: IScreenAttributesState
 
 sprite?: ISpriteState
 
-velocity?: IVelocityState
+worldPhysics?: IWorldPhysicsState
 
 }
 
@@ -504,11 +545,13 @@ export interface IComponents {
 
 boxCollider?: BoxColliderComponent
 
-drag?: DragComponent
-
 follow?: FollowComponent
 
+movement?: MovementComponent
+
 net?: NetworkedComponent
+
+objectPhysics?: ObjectPhysicsComponent
 
 position?: PositionComponent
 
@@ -516,7 +559,7 @@ screen?: ScreenAttributesComponent
 
 sprite?: SpriteComponent
 
-velocity?: VelocityComponent
+worldPhysics?: WorldPhysicsComponent
 
 }
 
@@ -524,11 +567,13 @@ const componentClasses = {
 
 boxCollider: BoxColliderComponent,
 
-drag: DragComponent,
-
 follow: FollowComponent,
 
+movement: MovementComponent,
+
 net: NetworkedComponent,
+
+objectPhysics: ObjectPhysicsComponent,
 
 position: PositionComponent,
 
@@ -536,7 +581,7 @@ screen: ScreenAttributesComponent,
 
 sprite: SpriteComponent,
 
-velocity: VelocityComponent,
+worldPhysics: WorldPhysicsComponent,
 
 }
 
