@@ -97,7 +97,7 @@ export class Game {
 
   tick = () => {
     this.meter.tickStart()
-    const fakeTimeElaspsed = 0.016
+    const fakeTimeElaspsed = (window as any).t || 0.00000001
     for (const effector of this.effectors) {
       effector.tick(fakeTimeElaspsed)
     }
